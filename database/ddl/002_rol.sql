@@ -4,3 +4,5 @@ CREATE TABLE rol (
     nombre VARCHAR(30) NOT NULL UNIQUE,
     descripcion VARCHAR(255) NOT NULL
 );
+
+select * from rol ; 
