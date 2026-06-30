@@ -15,3 +15,5 @@ VALUES
 (
     'Chofer', 'Usuario autorizado para aceptar solicitudes de traslados y prestar los servicios de transporte a los clientes.'    
 );
+
+SELECT * FROM rol;
