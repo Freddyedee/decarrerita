@@ -2,5 +2,5 @@
 CREATE TABLE rol (
     id_rol SERIAL PRIMARY KEY,
     nombre VARCHAR(30) NOT NULL UNIQUE,
-    descripcion VARCHAR(30)
+    descripcion VARCHAR(255) NOT NULL
 );
