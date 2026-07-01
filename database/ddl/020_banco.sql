@@ -1,0 +1,6 @@
+CREATE TABLE banco (
+    id_banco SERIAL PRIMARY KEY,
+    nombre_banco VARCHAR(100) NOT NULL UNIQUE,
+    codigo_banco VARCHAR(20) NOT NULL UNIQUE,
+    activo BOOLEAN NOT NULL DEFAULT TRUE
+);

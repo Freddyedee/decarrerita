@@ -1,0 +1,5 @@
+CREATE TABLE marca (
+    id_marca SERIAL PRIMARY KEY,
+    nombre VARCHAR(50) NOT NULL UNIQUE,
+    descripcion VARCHAR(100) DEFAULT NULL
+);
