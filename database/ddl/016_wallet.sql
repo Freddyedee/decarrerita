@@ -1,11 +1,21 @@
 CREATE TABLE wallet (
     id_wallet SERIAL PRIMARY KEY,
+<<<<<<< HEAD
     id_usuario INTEGER NOT NULL UNIQUE, -- Cambiado a INTEGER
 	
     saldo_disponible DECIMAL(12,2) NOT NULL DEFAULT 0.00,
     saldo_congelado DECIMAL(12,2) NOT NULL DEFAULT 0.00,
 
 	estado_bloqueo BOOLEAN NOT NULL DEFAULT FALSE,
+=======
+    id_usuario INTEGER NOT NULL UNIQUE, -- atributo derivado de la relación uno a uno con la tabla usuario
+	
+    saldo_disponible DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+
+    saldo_congelado DECIMAL(12,2) NOT NULL DEFAULT 0.00, --logica interna 
+
+	estado_bloqueo BOOLEAN NOT NULL DEFAULT FALSE, --logica interna
+>>>>>>> origin/intento_base_datos
 	moneda VARCHAR (3) NOT NULL DEFAULT 'USD', 
     fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
