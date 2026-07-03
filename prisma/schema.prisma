@@ -1,13 +1,310 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model asignacion_chofer {
+  id_asignacion    Int      @id @default(autoincrement())
+  id_traslado      Int
+  id_chofer        Int
+  prioridad        Int
+  estado_respuesta String   @default("PENDIENTE") @db.VarChar(20)
+  chofer           chofer   @relation(fields: [id_chofer], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_asignacion_chofer")
+  traslado         traslado @relation(fields: [id_traslado], references: [id_traslado], onDelete: Cascade, onUpdate: NoAction, map: "fk_asignacion_traslado")
+}
+
+model auditoria_administrativa {
+  id_auditoria       Int      @id @default(autoincrement())
+  id_usuario_admin   Int
+  entidad_afectada   String   @db.VarChar(50)
+  id_registro_afecta Int
+  accion             String   @db.VarChar(30)
+  valor_anterior     String
+  valor_nuevo        String
+  observacion        String
+  fecha_accion       DateTime @default(now()) @db.Timestamp(6)
+  usuario            usuario  @relation(fields: [id_usuario_admin], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_auditoria_admin")
+}
+
+model banco {
+  id_banco         Int                @id @default(autoincrement())
+  nombre_banco     String             @unique @db.VarChar(100)
+  codigo_banco     String             @unique @db.VarChar(20)
+  activo           Boolean            @default(true)
+  recarga          recarga[]
+  solicitud_retiro solicitud_retiro[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model calificacion {
+  id_calificacion        Int      @id @default(autoincrement())
+  id_traslado            Int
+  id_cliente             Int
+  id_chofer              Int
+  calificador_es_cliente Boolean
+  puntuacion             Int      @db.SmallInt
+  comentario             String?
+  fecha_calificacion     DateTime @default(now()) @db.Timestamp(6)
+  chofer                 chofer   @relation(fields: [id_chofer], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_cal_chofer")
+  cliente                cliente  @relation(fields: [id_cliente], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_cal_cliente")
+  traslado               traslado @relation(fields: [id_traslado], references: [id_traslado], onDelete: Cascade, onUpdate: NoAction, map: "fk_cal_traslado")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model chofer {
+  id_usuario             Int                      @id
+  licencia               String                   @unique @db.VarChar(30)
+  estado_aprobacion      String                   @db.VarChar(20)
+  puntaje_promedio       Decimal?                 @default(5.00) @db.Decimal(3, 2)
+  viajes_completados     Int?                     @default(0)
+  asignacion_chofer      asignacion_chofer[]
+  calificacion           calificacion[]
+  usuario                usuario                  @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
+  contacto_emergencia    contacto_emergencia[]
+  evaluacion_psicologica evaluacion_psicologica[]
+  traslado               traslado[]
+  vehiculo               vehiculo[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model cliente {
+  id_usuario      Int            @id
+  rating_promedio Decimal?       @default(5.00) @db.Decimal(3, 2)
+  calificacion    calificacion[]
+  usuario         usuario        @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
+  traslado        traslado[]
+}
+
+model configuracion_sistema {
+  id_configuracion    Int      @id @default(autoincrement())
+  nombre              String   @unique @db.VarChar(100)
+  valor               String   @db.VarChar(255)
+  descripcion         String
+  fecha_actualizacion DateTime @default(now()) @db.Timestamp(6)
+}
+
+model contacto_emergencia {
+  id_contacto       Int     @id @default(autoincrement())
+  id_chofer         Int
+  nombre_contacto   String  @db.VarChar(100)
+  parentesco        String  @db.VarChar(50)
+  telefono_contacto String  @db.VarChar(20)
+  activo            Boolean @default(true)
+  chofer            chofer  @relation(fields: [id_chofer], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_contacto_chofer")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model evaluacion_psicologica {
+  id_evaluacion     Int      @id @default(autoincrement())
+  id_chofer         Int
+  fecha_evaluacion  DateTime @default(now()) @db.Timestamp(6)
+  resultado         String   @db.VarChar(50)
+  observaciones     String   @db.VarChar(255)
+  fecha_vencimiento DateTime @db.Timestamp(6)
+  calificacion      Int
+  chofer            chofer   @relation(fields: [id_chofer], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_evaluacion_psicologica_chofer")
+}
+
+model historial_estado_traslado {
+  id_historial_estado Int      @id @default(autoincrement())
+  id_traslado         Int
+  estado_anterior     String   @db.VarChar(30)
+  estado_nuevo        String   @db.VarChar(30)
+  observacion         String?
+  fecha_cambio        DateTime @default(now()) @db.Timestamp(6)
+  traslado            traslado @relation(fields: [id_traslado], references: [id_traslado], onDelete: Cascade, onUpdate: NoAction, map: "fk_historial_traslado")
+}
+
+model marca {
+  id_marca    Int        @id @default(autoincrement())
+  nombre      String     @unique @db.VarChar(50)
+  descripcion String?    @db.VarChar(100)
+  vehiculo    vehiculo[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model movimiento_wallet {
+  id_movimiento    Int       @id @default(autoincrement())
+  id_wallet        Int
+  id_traslado      Int?
+  tipo_movimiento  String    @db.VarChar(30)
+  monto            Decimal   @db.Decimal(12, 2)
+  saldo_anterior   Decimal   @db.Decimal(12, 2)
+  saldo_posterior  Decimal   @db.Decimal(12, 2)
+  descripcion      String
+  fecha_movimiento DateTime  @default(now()) @db.Timestamp(6)
+  traslado         traslado? @relation(fields: [id_traslado], references: [id_traslado], onDelete: NoAction, onUpdate: NoAction, map: "fk_mov_traslado")
+  wallet           wallet    @relation(fields: [id_wallet], references: [id_wallet], onDelete: Cascade, onUpdate: NoAction, map: "fk_mov_wallet")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model notificacion {
+  id_notificacion   Int       @id @default(autoincrement())
+  id_usuario        Int
+  titulo            String    @db.VarChar(50)
+  mensaje           String    @db.VarChar(255)
+  tipo_notificacion String    @db.VarChar(100)
+  fecha_envio       DateTime  @default(now()) @db.Timestamp(6)
+  fecha_lectura     DateTime? @db.Timestamp(6)
+  usuario           usuario   @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_notificacion_usuario")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model penalizacion {
+  id_penalizacion     Int      @id @default(autoincrement())
+  id_wallet           Int
+  id_traslado         Int
+  id_usuario_afectado Int
+  motivo              String   @db.VarChar(100)
+  monto               Decimal  @default(0.00) @db.Decimal(12, 2)
+  fecha_penalizacion  DateTime @default(now()) @db.Timestamp(6)
+  tipo_penalizacion   String   @db.VarChar(20)
+  observacion         String
+  traslado            traslado @relation(fields: [id_traslado], references: [id_traslado], onDelete: Cascade, onUpdate: NoAction, map: "fk_pen_traslado")
+  usuario             usuario  @relation(fields: [id_usuario_afectado], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_pen_usuario")
+  wallet              wallet   @relation(fields: [id_wallet], references: [id_wallet], onDelete: Cascade, onUpdate: NoAction, map: "fk_pen_wallet")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model recarga {
+  id_recarga       Int       @id @default(autoincrement())
+  id_wallet        Int
+  id_banco         Int
+  monto            Decimal   @db.Decimal(12, 2)
+  referencia_pago  String    @db.VarChar(100)
+  estado           String    @default("PENDIENTE") @db.VarChar(20)
+  fecha_solicitud  DateTime  @default(now()) @db.Timestamp(6)
+  fecha_aprobacion DateTime? @db.Timestamp(6)
+  banco            banco     @relation(fields: [id_banco], references: [id_banco], onDelete: NoAction, onUpdate: NoAction, map: "fk_recarga_banco")
+  wallet           wallet    @relation(fields: [id_wallet], references: [id_wallet], onDelete: Cascade, onUpdate: NoAction, map: "fk_recarga_wallet")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model revision_vehicular {
+  id_revision       Int      @id @default(autoincrement())
+  id_vehiculo       Int
+  fecha_revision    DateTime @default(now()) @db.Timestamp(6)
+  resultado         String   @db.VarChar(20)
+  observaciones     String   @db.VarChar(255)
+  fecha_vencimiento DateTime @db.Timestamp(6)
+  calificacion      Int
+  vehiculo          vehiculo @relation(fields: [id_vehiculo], references: [id_vehiculo], onDelete: Cascade, onUpdate: NoAction, map: "fk_revision_vehiculo")
+}
+
+model rol {
+  id_rol      Int       @id @default(autoincrement())
+  nombre      String    @unique @db.VarChar(30)
+  descripcion String?   @db.VarChar(255)
+  usuario     usuario[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model solicitud_retiro {
+  id_retiro           Int       @id @default(autoincrement())
+  id_wallet           Int
+  id_banco            Int
+  monto               Decimal   @db.Decimal(12, 2)
+  numero_cuenta       String    @db.VarChar(50)
+  titular_cuenta      String    @db.VarChar(100)
+  estado              String    @default("PENDIENTE") @db.VarChar(20)
+  fecha_solicitud     DateTime  @default(now()) @db.Timestamp(6)
+  fecha_procesamiento DateTime? @db.Timestamp(6)
+  banco               banco     @relation(fields: [id_banco], references: [id_banco], onDelete: NoAction, onUpdate: NoAction, map: "fk_retiro_banco")
+  wallet              wallet    @relation(fields: [id_wallet], references: [id_wallet], onDelete: Cascade, onUpdate: NoAction, map: "fk_retiro_wallet")
+}
+
+model tarifa {
+  id_tarifa             Int        @id @default(autoincrement())
+  precio_km             Decimal    @db.Decimal(12, 2)
+  tarifa_base           Decimal    @db.Decimal(12, 2)
+  tarifa_cancelacion    Decimal    @db.Decimal(12, 2)
+  porcentaje_comision   Decimal    @db.Decimal(5, 2)
+  fecha_inicio_vigencia DateTime   @default(now()) @db.Timestamp(6)
+  fecha_fin_vigencia    DateTime?  @db.Timestamp(6)
+  traslado              traslado[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model traslado {
+  id_traslado               Int                         @id @default(autoincrement())
+  id_cliente                Int
+  id_chofer                 Int
+  id_vehiculo               Int
+  id_tarifa                 Int
+  origen_latitud            Decimal                     @db.Decimal(9, 6)
+  origen_longitud           Decimal                     @db.Decimal(9, 6)
+  destino_latitud           Decimal                     @db.Decimal(9, 6)
+  destino_longitud          Decimal                     @db.Decimal(9, 6)
+  distancia_estimada_km     Decimal                     @db.Decimal(10, 2)
+  costo_estimado            Decimal                     @db.Decimal(12, 2)
+  estado_actual             String                      @default("SOLICITADO") @db.VarChar(30)
+  fecha_solicitud           DateTime                    @default(now()) @db.Timestamp(6)
+  asignacion_chofer         asignacion_chofer[]
+  calificacion              calificacion[]
+  historial_estado_traslado historial_estado_traslado[]
+  movimiento_wallet         movimiento_wallet[]
+  penalizacion              penalizacion[]
+  chofer                    chofer                      @relation(fields: [id_chofer], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_traslado_chofer")
+  cliente                   cliente                     @relation(fields: [id_cliente], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_traslado_cliente")
+  tarifa                    tarifa                      @relation(fields: [id_tarifa], references: [id_tarifa], onDelete: NoAction, onUpdate: NoAction, map: "fk_traslado_tarifa")
+  vehiculo                  vehiculo                    @relation(fields: [id_vehiculo], references: [id_vehiculo], onDelete: NoAction, onUpdate: NoAction, map: "fk_traslado_vehiculo")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model usuario {
+  id_usuario               Int                        @id @default(autoincrement())
+  id_rol                   Int
+  nombre                   String                     @db.VarChar(50)
+  apellido                 String                     @db.VarChar(50)
+  email                    String                     @unique @db.VarChar(100)
+  telefono                 String?                    @unique @db.VarChar(20)
+  password_hash            String                     @db.VarChar(255)
+  estado                   String                     @db.VarChar(20)
+  fecha_creacion           DateTime                   @default(now()) @db.Timestamp(6)
+  auditoria_administrativa auditoria_administrativa[]
+  chofer                   chofer?
+  cliente                  cliente?
+  notificacion             notificacion[]
+  penalizacion             penalizacion[]
+  rol                      rol                        @relation(fields: [id_rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_rol")
+  wallet                   wallet?
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model vehiculo {
+  id_vehiculo         Int                  @id @default(autoincrement())
+  id_marca            Int
+  id_chofer           Int
+  placa               String               @unique @db.VarChar(10)
+  modelo              String               @db.VarChar(50)
+  color               String               @db.VarChar(30)
+  annio               Int                  @db.SmallInt
+  capacidad_pasajeros Int                  @db.SmallInt
+  estado              String               @default("activo") @db.VarChar(20)
+  fecha_registro      DateTime             @default(now()) @db.Timestamp(6)
+  revision_vehicular  revision_vehicular[]
+  traslado            traslado[]
+  chofer              chofer               @relation(fields: [id_chofer], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_vehiculo_chofer")
+  marca               marca                @relation(fields: [id_marca], references: [id_marca], onDelete: NoAction, onUpdate: NoAction, map: "fk_vehiculo_marca")
+}
+
+model wallet {
+  id_wallet         Int                 @id @default(autoincrement())
+  id_usuario        Int                 @unique
+  saldo_disponible  Decimal             @default(0.00) @db.Decimal(12, 2)
+  saldo_congelado   Decimal             @default(0.00) @db.Decimal(12, 2)
+  estado_bloqueo    Boolean             @default(false)
+  moneda            String              @default("USD") @db.VarChar(3)
+  fecha_creacion    DateTime            @default(now()) @db.Timestamp(6)
+  movimiento_wallet movimiento_wallet[]
+  penalizacion      penalizacion[]
+  recarga           recarga[]
+  solicitud_retiro  solicitud_retiro[]
+  usuario           usuario             @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_wallet_usuario")
 }
