@@ -48,3 +48,5 @@ SELECT r.nombre AS rol,
  COUNT (u.id_usuario) AS cantidad FROM usuario u 
  INNER JOIN rol r ON u.id_rol = r.id_rol GROUP BY r.nombre; 
 
+ SELECT * FROM chofer;
+
