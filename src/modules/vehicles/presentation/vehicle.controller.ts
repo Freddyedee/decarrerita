@@ -1,15 +1,19 @@
-import { CreateVehicleUseCase } from "../application/create-vehicle";
 import { CreateVehicleDTO } from "../application/dto/create-vehicle-dto";
+import { CreateVehicleUseCase } from "../application/use-cases/createVehicleUseCase";
+import { GetAllVehiclesUseCase } from "../application/use-cases/GetAllVehiclesUseCase";
 
 export class VehicleController {
 
-  constructor(
-    private readonly createVehicleUseCase: CreateVehicleUseCase
-  ) {}
+    constructor(
+        private readonly createVehicleUseCase: CreateVehicleUseCase,
+        private readonly getAllVehiclesUseCase?: GetAllVehiclesUseCase
+    ) {}
 
-    async create(data: CreateVehicleDTO) {
+    async create(body: CreateVehicleDTO) {
+        return this.createVehicleUseCase.execute(body);
+    }
 
-    const vehicle = await this.createVehicleUseCase.execute(data);
-    return vehicle;
-  }
+    async getAll() {
+        return this.getAllVehiclesUseCase!.execute();
+    }
 }

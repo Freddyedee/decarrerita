@@ -36,3 +36,6 @@ SELECT saldo_disponible FROM wallet WHERE id_usuario = (SELECT id_usuario FROM u
 
 -- Verifica que el movimiento quedó registrado con el cálculo correcto
 SELECT * FROM movimiento_wallet ORDER BY fecha_movimiento DESC LIMIT 1;
+
+SELECT * FROM vehiculo;
+DELETE FROM vehiculo WHERE id_vehiculo = 0;

@@ -21,6 +21,7 @@ EXECUTE FUNCTION fn_crear_wallet_usuario();
 -- TEST DE TRIGGER. 
 
 INSERT INTO usuario ( id_rol, nombre, apellido, email, telefono, password_hash, estado) VALUES (1, 'Test', 'User', 'test@test.com', '000', 'hash', 'activo'); 
+INSERT INTO usuario ( id_rol, nombre, apellido, email, telefono, password_hash, estado) VALUES (1, 'Pedro', 'User', 'pedro@pedro.com', '0414587889000', 'hash', 'activo'); 
 
 SELECT u.nombre, u.apellido, w.id_wallet, w.id_usuario ,w.saldo_disponible FROM usuario u  JOIN wallet w ON u.id_usuario = w.id_usuario;
 

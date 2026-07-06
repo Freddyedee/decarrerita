@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { VehicleController } from "@/modules/vehicles/presentation/vehicle.controller"; 
-import { CreateVehicleUseCase } from "@/modules/vehicles/application/create-vehicle";
+import { CreateVehicleUseCase } from "@/modules/vehicles/application/use-cases/createVehicleUseCase";
 import { VehicleRepository } from "@/modules/vehicles/infrastructure/prisma/vehicle.repository";
 
 export async function POST(req: NextRequest) {
 
   try {
 
-    // 📥 Convertimos request HTTP a objeto plano
+    // Convertimos request HTTP a objeto plano
     const body = await req.json();
 
-    // 🔌 Inyección manual de dependencias (sin framework DI aún)
+    // Inyección manual de dependencias (sin framework DI aún)
     const repository = new VehicleRepository();
     const useCase = new CreateVehicleUseCase(repository);
     const controller = new VehicleController(useCase);

@@ -4,36 +4,36 @@
 
 BEGIN;
 
-
 WITH nuevo_usuario AS (
     INSERT INTO usuario (id_rol, nombre, apellido, email, telefono, password_hash, estado)
     VALUES (
         (SELECT id_rol FROM rol WHERE nombre = 'Chofer'), 
-        'pedro', 'perez', 'pedro@chofer.com', '04148761470', 'hash_pedro_789', 'activo'
+        'Alonso', 'Alonso', 'Alonso@chofer.com', '04249545987', 'hash_Alonso_789', 'activo'
     )
     RETURNING id_usuario
 ),
 nuevo_chofer AS (
     INSERT INTO chofer (id_usuario, licencia, estado_aprobacion)
-    SELECT id_usuario, 'LIC-12345678', 'aprobado' FROM nuevo_usuario
+    SELECT id_usuario, 'LIC-5588', 'aprobado' FROM nuevo_usuario
     RETURNING id_usuario
-),
-nueva_wallet AS (
-    INSERT INTO wallet (id_usuario, saldo_disponible, moneda)
-    SELECT id_usuario, 0.00, 'USD' FROM nuevo_usuario
-    RETURNING id_wallet
 )
+-- Eliminamos el bloque 'nueva_wallet' porque el trigger lo hace solo
 INSERT INTO vehiculo (id_marca, id_chofer, placa, modelo, color, annio, capacidad_pasajeros, estado)
 SELECT 
-    (SELECT id_marca FROM marca WHERE nombre = 'Toyota'),
+    (SELECT id_marca FROM marca WHERE nombre = 'Ford'),
     id_usuario, 
-    'ABC-123', 
-    'Corolla', 
+    'ABC-4477', 
+    'Mustang', 
     'Blanco', 
     2020, 
-    4, 
+    2, 
     'activo'
 FROM nuevo_chofer;
 
 COMMIT;
 
+select * from chofer;
+select * from vehiculo
+
+-- Esto borra todos los datos y resetea todos los contadores de las tablas a 1
+TRUNCATE TABLE vehiculo, wallet, chofer, usuario RESTART IDENTITY CASCADE;

@@ -1,12 +1,12 @@
-import { Vehicle } from "../domain/Vehicle";
-import { VehicleStatus } from "../domain/VehicleStatus";
-import { VehicleRepository } from "../infrastructure/prisma/vehicle.repository";
-import { CreateVehicleDTO } from "./dto/create-vehicle-dto";
+import { Vehicle } from "../../domain/Vehicle";
+import { VehicleStatus } from "../../domain/VehicleStatus";
+import { IVehicleRepository } from "../../domain/repositories/IVehicleRepository";
+import { CreateVehicleDTO } from "../dto/create-vehicle-dto";
 
 export class CreateVehicleUseCase {
 
   constructor(
-    private vehicleRepository: VehicleRepository
+    private readonly vehicleRepository: IVehicleRepository
   ) {}
 
   async execute(input: CreateVehicleDTO) {
