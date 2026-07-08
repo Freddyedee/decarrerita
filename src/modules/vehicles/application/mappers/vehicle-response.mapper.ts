@@ -1,4 +1,4 @@
-import { Vehicle } from "../../domain/Vehicle";
+import { Vehicle } from "../../domain/entities/Vehicle";
 import { VehicleResponseDTO } from "../dto/VehicleResponseDTO";
 
 /**

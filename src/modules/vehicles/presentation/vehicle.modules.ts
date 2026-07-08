@@ -16,11 +16,24 @@
  */
 
 import { VehicleRepository } from "../infrastructure/prisma/vehicle.repository";
+import { RevisionRepository } from "../infrastructure/prisma/revision.repository";
 
 import { CreateVehicleUseCase } from "../application/use-cases/createVehicleUseCase";
 import { GetAllVehiclesUseCase } from "../application/use-cases/GetAllVehiclesUseCase";
+import { GetVehicleByIdUseCase } from "../application/use-cases/GetVehicleByIdUseCase";
+import { UpdateVehicleStatusUseCase } from "../application/use-cases/UpdateVehicleStatusUseCase";
+import { GetVehiclesByDriverUseCase } from "../application/use-cases/GetVehiclesByDriverUseCase";
 
+import { SelectVehicleUseCase } from "../application/use-cases/SelectVehicleUseCase";
+import { RegisterVehicleInspectionsUseCase } from "../application/use-cases/RegisterVehicleInspectionUseCase";
+import { GetInspectionHistoryUseCase } from "../application/use-cases/GetInspectionHistoryUseCase";
+
+import { RevisionController } from "./revision.controller";
 import { VehicleController } from "./vehicle.controller";
+import { MarcaRepository } from "../infrastructure/prisma/marca.repository";
+import { GetAllMarcasUseCase } from "../application/use-cases/GetAllMarcasUseCase";
+import { MarcaController } from "./marca.controller";
+import { CreateMarcaUseCase } from "../application/use-cases/CreateMarcaUseCase";
 
 /* ============================================================
  * REPOSITORIES
@@ -33,6 +46,8 @@ import { VehicleController } from "./vehicle.controller";
  */
 
 const vehicleRepository = new VehicleRepository();
+const revisionRepository = new RevisionRepository(); 
+const marcaRepository = new MarcaRepository(); 
 
 /* ============================================================
  * USE CASES
@@ -42,11 +57,25 @@ const vehicleRepository = new VehicleRepository();
  * que realmente necesita.
  */
 
-const createVehicleUseCase =
-    new CreateVehicleUseCase(vehicleRepository);
+const createVehicleUseCase          = new CreateVehicleUseCase(vehicleRepository, marcaRepository);
+const getAllVehiclesUseCase         = new GetAllVehiclesUseCase(vehicleRepository);
+const getVehicleByIdUseCase         = new GetVehicleByIdUseCase(vehicleRepository);
+const updateVehicleStatusUseCase    = new UpdateVehicleStatusUseCase(vehicleRepository);
+const getVehiclesByDriverUseCase    = new GetVehiclesByDriverUseCase(vehicleRepository);
+const selectVehiclesUseCase         = new SelectVehicleUseCase(vehicleRepository, revisionRepository); 
 
-const getAllVehiclesUseCase =
-    new GetAllVehiclesUseCase(vehicleRepository);
+
+//Use cases de Revision 
+
+const registerInspectionUseCase = new RegisterVehicleInspectionsUseCase(revisionRepository, vehicleRepository); 
+const getInspectionHistoryUseCase = new GetInspectionHistoryUseCase(revisionRepository); 
+
+// Use case de Marca
+
+const createMarcaUseCase = new CreateMarcaUseCase(marcaRepository);
+const getAllMarcasUseCase = new GetAllMarcasUseCase(marcaRepository); 
+
+
 
 /* ============================================================
  * CONTROLLER
@@ -58,11 +87,20 @@ const getAllVehiclesUseCase =
  * nuevos casos de uso aquí.
  */
 
-export const vehicleController =
-    new VehicleController(
+export const vehicleController = new VehicleController(
 
         createVehicleUseCase,
-
-        getAllVehiclesUseCase
-
+        getAllVehiclesUseCase,
+        getVehicleByIdUseCase, 
+        updateVehicleStatusUseCase,
+        getVehiclesByDriverUseCase, 
+        selectVehiclesUseCase
     );
+
+export const revisionController = new RevisionController(
+    registerInspectionUseCase, 
+    getInspectionHistoryUseCase
+); 
+
+export const marcaController = new MarcaController(createMarcaUseCase, getAllMarcasUseCase);
+

@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-
-import { VehicleController } from "@/modules/vehicles/presentation/vehicle.controller";
-import { CreateVehicleUseCase } from "@/modules/vehicles/application/use-cases/createVehicleUseCase";
-import { VehicleRepository } from "@/modules/vehicles/infrastructure/prisma/vehicle.repository";
 import { CreateVehicleDTO } from "@/modules/vehicles/application/dto/create-vehicle-dto";
+import { vehicleController } from "./vehicle.modules";
 
 export async function POST(req: NextRequest) {
 
@@ -11,7 +8,7 @@ export async function POST(req: NextRequest) {
 
     const raw = await req.json();
 
-    // 🔢 Normalización de tipos: HTTP/JSON puede entregar strings,
+    // Normalización de tipos: HTTP/JSON puede entregar strings,
     // pero el dominio espera números. Esta conversión pertenece
     // aquí, no al UseCase ni al Controller.
     const body: CreateVehicleDTO = {
@@ -24,11 +21,7 @@ export async function POST(req: NextRequest) {
       passengerCapacity: Number(raw.passengerCapacity)
     };
 
-    const repository = new VehicleRepository();
-    const useCase = new CreateVehicleUseCase(repository);
-    const controller = new VehicleController(useCase);
-
-    const result = await controller.create(body);
+    const result = await vehicleController.create(body);
 
     return NextResponse.json(
       { message: "Vehicle created successfully", data: result },
@@ -41,6 +34,21 @@ export async function POST(req: NextRequest) {
         message: "Error creating vehicle",
         error: error instanceof Error ? error.message : "Unknown error"
       },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET() {
+  try {
+    const result = await vehicleController.getAll();
+    return NextResponse.json(
+      { message: "Vehicles retrieved successfully", data: result },
+      { status: 200 }
+    );
+  } catch (error) {
+    return NextResponse.json(
+      { message: "Error retrieving vehicles", error: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
     );
   }

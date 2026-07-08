@@ -1,4 +1,4 @@
-import { Vehicle } from "../Vehicle";
+import { Vehicle } from "../entities/Vehicle";
 
 /**
  * Puerto (Port) del módulo Vehicle.
@@ -43,4 +43,10 @@ export interface IVehicleRepository {
   findByDriverId(driverId: number): Promise<Vehicle[]>;
 
 
+    /**
+   * Todos los vehículos actualmente ACTIVE, sin importar el chofer.
+   * Usado por Traslados para determinar qué choferes tienen
+   * un vehículo seleccionado y disponible ahora mismo.
+   */
+  findAllActive(): Promise<Vehicle[]>;
 }

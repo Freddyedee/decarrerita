@@ -1,12 +1,14 @@
-import { Vehicle } from "../../domain/Vehicle";
-import { VehicleStatus } from "../../domain/VehicleStatus";
+import { Vehicle } from "../../domain/entities/Vehicle";
+import { VehicleStatus } from "../../domain/enum/VehicleStatus";
 import { IVehicleRepository } from "../../domain/repositories/IVehicleRepository";
 import { CreateVehicleDTO } from "../dto/create-vehicle-dto";
+import { MarcaRepository } from "../../infrastructure/prisma/marca.repository";
 
 export class CreateVehicleUseCase {
 
   constructor(
-    private readonly vehicleRepository: IVehicleRepository
+    private readonly vehicleRepository: IVehicleRepository,
+    private readonly marcaRepository: MarcaRepository
   ) {}
 
   async execute(input: CreateVehicleDTO) {
@@ -32,6 +34,12 @@ export class CreateVehicleUseCase {
       throw new Error("Invalid passenger capacity");
     }
 
+    const marca = await this.marcaRepository.findById(input.brandId);
+
+    if (!marca) {
+      throw new Error(`Marca with id ${input.brandId} not found`);
+    }
+
     //  4. VALIDACIÓN CRÍTICA: placa única
     const existingVehicle = await this.vehicleRepository.findByPlate(input.plate);
 
@@ -50,7 +58,7 @@ export class CreateVehicleUseCase {
       input.year,
       input.passengerCapacity,
       new Date(),
-      VehicleStatus.ACTIVE
+      VehicleStatus.REVISION
     );
 
     //  6. PERSISTENCIA

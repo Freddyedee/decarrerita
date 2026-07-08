@@ -1,7 +1,8 @@
 import { prisma  }       from "@/infra/prisma/client";
-import { Vehicle }       from "../../domain/Vehicle";
+import { Vehicle }       from "../../domain/entities/Vehicle";
 import { IVehicleRepository } from "../../domain/repositories/IVehicleRepository";
 import { vehicleMapper } from "../mappers/vehicle.mapper";
+import { VehicleStatus } from "../../domain/enum/VehicleStatus";
 
 export class VehicleRepository implements IVehicleRepository {
 
@@ -109,5 +110,15 @@ export class VehicleRepository implements IVehicleRepository {
         await prisma.vehiculo.delete({
             where: { id_vehiculo: id }
         });
+    }
+
+    async findAllActive(): Promise<Vehicle[]> {
+
+        const vehicles = await prisma.vehiculo.findMany({
+            where: { estado: VehicleStatus.ACTIVE }
+        });
+
+        return vehicles.map(v => vehicleMapper.toDomain(v));
+        
     }
 }

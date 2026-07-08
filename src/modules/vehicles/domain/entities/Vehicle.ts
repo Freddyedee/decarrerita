@@ -1,4 +1,4 @@
-import { VehicleStatus } from "./VehicleStatus";
+import { VehicleStatus } from "../enum/VehicleStatus";
 
 
 export class Vehicle {

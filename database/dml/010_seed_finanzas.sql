@@ -39,3 +39,8 @@ SELECT * FROM movimiento_wallet ORDER BY fecha_movimiento DESC LIMIT 1;
 
 SELECT * FROM vehiculo;
 DELETE FROM vehiculo WHERE id_vehiculo = 0;
+
+SELECT * from marca; 
+SELECT id_marca, nombre FROM marca ORDER BY id_marca;
+
+SELECT * FROM tarifa; 

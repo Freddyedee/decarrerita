@@ -1,8 +1,8 @@
 /** Archivo cuya principal funcion se basa en funcionar como:
  *  puente entre Prisma Model (Base de datos) <-> Domain Entity (Dominio - Domain) */
 
-import { Vehicle }                   from "../../domain/Vehicle";
-import { VehicleStatus }             from "../../domain/VehicleStatus";
+import { Vehicle }                   from "../../domain/entities/Vehicle";
+import { VehicleStatus }             from "../../domain/enum/VehicleStatus";
 import { vehiculo as PrismaVehicle } from "@prisma/client";
 
 export class vehicleMapper {

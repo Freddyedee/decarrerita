@@ -1,7 +1,7 @@
 import { VehicleResponseDTO } from "../dto/VehicleResponseDTO";
 import { IVehicleRepository } from "../../domain/repositories/IVehicleRepository";
 import { VehicleResponseMapper } from "../mappers/vehicle-response.mapper";
-import { VehicleStatus } from "../../domain/VehicleStatus";
+import { VehicleStatus } from "../../domain/enum/VehicleStatus";
 
 export class UpdateVehicleStatusUseCase { 
 
@@ -9,14 +9,20 @@ export class UpdateVehicleStatusUseCase {
 
     async execute (id: number, newStatus: VehicleStatus): Promise <VehicleResponseDTO>{
 
+
+        if (newStatus === VehicleStatus.ACTIVE) {
+            throw new Error(
+                "Cannot activate a vehicle directly. Use the vehicle selection flow instead."
+            );
+        }
+
     const vehicle = await this.vehicleRepository.findById(id); 
 
     if(!vehicle) { throw new Error ('Vehicle with id ${id} not found'); } 
 
+
+
     switch (newStatus) {
-            case VehicleStatus.ACTIVE:
-                vehicle.activate();
-                break;
             case VehicleStatus.INACTIVE:
                 vehicle.desactivate();
                 break;

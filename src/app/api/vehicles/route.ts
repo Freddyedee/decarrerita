@@ -1,23 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-
-import { VehicleController } from "@/modules/vehicles/presentation/vehicle.controller"; 
-import { CreateVehicleUseCase } from "@/modules/vehicles/application/use-cases/createVehicleUseCase";
-import { VehicleRepository } from "@/modules/vehicles/infrastructure/prisma/vehicle.repository";
+import { vehicleController } from "@/modules/vehicles/presentation/vehicle.modules";
+import { CreateVehicleDTO } from "@/modules/vehicles/application/dto/create-vehicle-dto";
 
 export async function POST(req: NextRequest) {
 
   try {
 
     // Convertimos request HTTP a objeto plano
-    const body = await req.json();
+    const raw = await req.json();
 
-    // Inyección manual de dependencias (sin framework DI aún)
-    const repository = new VehicleRepository();
-    const useCase = new CreateVehicleUseCase(repository);
-    const controller = new VehicleController(useCase);
+    const body: CreateVehicleDTO = {
+      brandId: Number(raw.brandId),
+      driverId: Number(raw.driverId),
+      plate: raw.plate,
+      model: raw.model,
+      color: raw.color,
+      year: Number(raw.year),
+      passengerCapacity: Number(raw.passengerCapacity)
+    };
 
     // Ejecutamos lógica del dominio
-    const result = await controller.create(body);
+    const result = await vehicleController.create(body);
 
     // Respuesta HTTP (único lugar que conoce Next.js)
     return NextResponse.json(
@@ -38,5 +41,22 @@ export async function POST(req: NextRequest) {
       },
       { status: 500 }
     );
+  }
+}
+
+export async function GET() {
+
+  try{
+    const result = await vehicleController.getAll(); 
+    return NextResponse.json(
+      {message: "Vehicles retrieved successfully", data: result }, 
+      {status : 200}
+    ); 
+  }catch (error){ 
+    return NextResponse.json(
+      { message: "Error retrieving vehicles", error: error instanceof Error ? error.message : "Unknow error"}, 
+      {status: 500}
+
+    ); 
   }
 }
