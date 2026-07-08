@@ -71,13 +71,12 @@ export class PrismaUserRepository implements IUserRepository {
     }
 
 
-    /////////////////////////////////////
     async update(user: User): Promise<User> {
 
-        const updated = await prisma.usuario.update({
+        const updatedUser = await prisma.usuario.update({
 
             where: {
-                id_usuario: user.userid!
+                id_usuario: user.getUserId()!
             },
 
             data: {
@@ -90,12 +89,15 @@ export class PrismaUserRepository implements IUserRepository {
 
                 telefono: user.getPhone().getValue(),
 
-                estado: user.getStatus()
+                password_hash: user.getPasswordHash().getValue(),
+
+                estado: user.getStatus(),
+
             }
 
         });
 
-        return this.toDomain(updated);
+        return this.toDomain(updatedUser);
 
     }
 

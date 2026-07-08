@@ -1,9 +1,11 @@
-export class LicenseNumber {
+export class DriverLicense
+ {
     private constructor(
         private readonly license: string
     ) {}
 
-    public static create(license: string): LicenseNumber {
+    public static create(license: string): DriverLicense
+     {
         const normalized = license
             .trim()
             .toUpperCase()
@@ -17,14 +19,15 @@ export class LicenseNumber {
             throw new Error("Invalid license number.");
         }
 
-        return new LicenseNumber(normalized);
+        return new DriverLicense
+        (normalized);
     }
 
-    public value(): string {
+    public getValue(): string {
         return this.license;
     }
 
-    public equals(other: LicenseNumber): boolean {
+    public equals(other: DriverLicense): boolean {
         return this.license === other.license;
     }
 }

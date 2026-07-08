@@ -1,4 +1,3 @@
-import { UserStatus } from "../../domain/enums/UserStatus";
 
 export interface UpdateUserStatusResponse {
 
