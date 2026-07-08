@@ -7,7 +7,7 @@ import { PersonName, Phone } from "../value-objects";
 export class User {
 
     constructor(
-        readonly userid: number | null,
+        readonly userid: number,
         private role: UserRole,
         private userFirstName: PersonName,
         private userLastName: PersonName,
@@ -18,57 +18,21 @@ export class User {
         readonly createdAt: Date,
     ) {}
 
-    activate() {
-
-        if (this.status === UserStatus.SUSPENDIDO) {
-            throw new Error("Deleted users cannot be activated.");
-        }
-
-        this.status = UserStatus.ACTIVO;
-
+    changeProfile(firstName: PersonName,
+                    lastName: PersonName,
+                    email: Email,
+                    phone: Phone,
+                    passwordHash: PasswordHash): void {
+    this.userFirstName = firstName;
+    this.userLastName = lastName;
+    this.email = email;
+    this.phone = phone;
+    this.passwordHash = passwordHash;
     }
 
-    suspend() {
-
-        if (this.status !== UserStatus.ACTIVO) {
-            throw new Error("Only active users can be suspended.");
-        }
-
-        this.status = UserStatus.SUSPENDIDO;
-
-    }
-
-    block() {
-
-        if (this.status === UserStatus.DELETED) {
-            throw new Error("Deleted users cannot be blocked.");
-        }
-
-        this.status = UserStatus.BLOCKED;
-
-    }
-
-    delete() {
-
-        this.status = UserStatus.DELETED;
-
-    }
-
-
-    changePassword(
-        newHash: PasswordHash
-    ) {
-
-        this.passwordHash = newHash;
-
-    }
-
-    changeEmail(
-        newEmail: Email
-    ) {
-
-        this.email = newEmail;
-    }
+    changeStatus(status: UserStatus): void {
+    this.status = status;
+    }   
 
     getFirstName() {
         return this.userFirstName;
@@ -98,16 +62,12 @@ export class User {
         return this.status;
     }
 
-    isActive() {
-        return this.status === UserStatus.activo;
+    getUserId(): number | null {
+    return this.userid;
     }
 
-    isBlocked() {
-        return this.status === UserStatus.inactivo;
-    }
-
-    isDeleted() {
-        return this.status === UserStatus.suspendido;
+    getCreatedAt(): Date {
+        return this.createdAt;
     }
 
 }

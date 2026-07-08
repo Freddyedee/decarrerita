@@ -1,53 +1,72 @@
 import { ApprovalStatus } from "../enums/ApprovalStatus";
+import { DriverLicense } from "../value-objects/DriverLicense";
 
 export class Driver {
     constructor(
-        public readonly userId: string,
-        private licenseNumber: string,
-        private approved: ApprovalStatus,
+        public readonly userId: number,
+        private licenseNumber: DriverLicense,
+        private status: ApprovalStatus,
         private averageRating: number,
-        private completedTrips: number
+        private completedTrips: number | null
     ) {}
 
-    public approve(): void {
-        this.approved = ApprovalStatus.APROBADO;
+    changeStatus(
+        status: ApprovalStatus
+    ): void {
+
+        this.status = status;
     }
 
-    public revokeApproval(): void {
-        this.approved = ApprovalStatus.RECHAZADO;
-    }
-
+    
     public updateLicense(
-        licenseNumber: string,
+        licenseNumber: DriverLicense,
     ): void {
         this.licenseNumber = licenseNumber;
     }
 
-    public updateAverageRating(rating: number): void {
-        if (rating < 0 || rating > 5) {
-            throw new Error("Invalid rating.");
+    changeMetrics(averageRating: number,completedTrips: number): void {
+
+        if (averageRating < 0 || averageRating > 5) {
+            throw new Error("Invalid average rating.");
         }
 
-        this.averageRating = rating;
+        if (completedTrips < 0) {
+            throw new Error("Completed trips cannot be negative.");
+        }
+
+        this.averageRating = averageRating;
+
+        this.completedTrips = completedTrips;
+
     }
 
-    public incrementCompletedTrips(): void {
-        this.completedTrips++;
-    }
+    changeLicense(licenseNumber: DriverLicense): void {
 
-    getLicenseNumber(): string {
-        return this.licenseNumber;
+        this.licenseNumber = licenseNumber;
+
     }
 
     isApproved(): boolean {
-        return this.approved === ApprovalStatus.APROBADO;
+        return this.status === ApprovalStatus.APROBADO;
     }
 
     getAverageRating(): number {
         return this.averageRating;
     }
 
-    getCompletedTrips(): number {
+    getCompletedTrips(): number | null {
         return this.completedTrips;
+    }
+
+    getStatus(): ApprovalStatus {
+        return this.status;
+    }
+
+    getUserId(): number {
+        return this.userId;
+    }
+
+    getLicenseNumber(): DriverLicense {
+        return this.licenseNumber;
     }
 }

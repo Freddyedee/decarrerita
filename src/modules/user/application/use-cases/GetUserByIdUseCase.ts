@@ -23,14 +23,14 @@ export class GetUserByIdUseCase {
 
         // 3. Retornar DTO
         return {
-            user_id: savedUser.userid,
-            role: newUser.getRole(),
-            firstName: newUser.getFirstName().getValue(),
-            lastName: newUser.getLastName().getValue(),
-            email: newUser.getEmail().getValue(),
-            phone: newUser.getPhone().getValue(),
-            status: newUser.getStatus(),
-            createdAt: newUser.createdAt
+            user_id: user.userid,
+            role: user.getRole(),
+            firstName: user.getFirstName().getValue(),
+            lastName: user.getLastName().getValue(),
+            email: user.getEmail().getValue(),
+            phone: user.getPhone().getValue(),
+            status: user.getStatus(),
+            createdAt: user.createdAt
         };
     }
 

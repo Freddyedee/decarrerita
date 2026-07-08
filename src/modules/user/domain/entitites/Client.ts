@@ -1,19 +1,27 @@
 export class Client {
     constructor(
-        public readonly userId: string,
+        public readonly userId: number,
 
         private averageRating: number
     ) {}
 
-    public updateAverageRating(rating: number): void {
-        if (rating < 0 || rating > 5) {
-            throw new Error("Invalid rating.");
+    changeAverageRating(
+        averageRating: number
+    ): void {
+
+        if (averageRating < 0 || averageRating > 5) {
+            throw new Error("Invalid average rating.");
         }
 
-        this.averageRating = rating;
+        this.averageRating = averageRating;
+
     }
 
     getAverageRating(): number {
         return this.averageRating;
+    }
+
+    getUserId(): number {
+        return this.userId;
     }
 }

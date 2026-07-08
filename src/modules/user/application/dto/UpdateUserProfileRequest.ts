@@ -1,4 +1,3 @@
-import { Email, PasswordHash, PersonName, Phone } from "../../domain/value-objects";
 
 export interface UpdateUserProfileRequest {
     userId: number;
