@@ -30,7 +30,7 @@ export class CreateUserUseCase {
         }
 
         const newUser = new User(
-            null,
+            null, // userId will be assigned by the database
             role,
             firstName,
             lastName,

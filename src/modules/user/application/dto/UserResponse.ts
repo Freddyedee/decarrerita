@@ -1,6 +1,6 @@
 
 export interface UserResponse {
-    user_id: number;
+    user_id: number | null;
     role: number;
     firstName: string;
     lastName: string;
