@@ -1,4 +1,4 @@
-import { prisma  }       from "@/infra/prisma/client";
+import { prisma  }       from "@/shared/lib/prisma";
 import { Vehicle }       from "../../domain/entities/Vehicle";
 import { IVehicleRepository } from "../../domain/repositories/IVehicleRepository";
 import { vehicleMapper } from "../mappers/vehicle.mapper";

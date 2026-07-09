@@ -1,4 +1,4 @@
-import { prisma } from './shared/lib/database/prisma'
+import { prisma } from './shared/lib/prisma'
 
 async function main() {
   // 1. Obtener los primeros 5 registros de cualquier tabla

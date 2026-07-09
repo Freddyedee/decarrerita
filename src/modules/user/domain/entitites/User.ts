@@ -7,7 +7,7 @@ import { PersonName, Phone } from "../value-objects";
 export class User {
 
     constructor(
-        readonly userid: number,
+        readonly userid: number | null,
         private role: UserRole,
         private userFirstName: PersonName,
         private userLastName: PersonName,

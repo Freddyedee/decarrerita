@@ -1,15 +1,40 @@
-/**
- * Estados posibles del ciclo de vida de un traslado.
- *
- * Nota importante: "cancelado" aquí significa que el VIAJE
- * se anuló antes de completarse (por cliente o chofer, con
- * penalización). Esto es distinto del "cancelar" que usa el
- * personal administrativo para referirse al PAGO al chofer
- * — ese concepto vive en movimiento_wallet, no aquí.
- */
 export enum EstadoTraslado {
-    SOLICITADO = 'SOLICITADO',   // creado, buscando chofer
-    EN_CURSO   = 'EN_CURSO',     // chofer aceptó, viaje en marcha
-    COMPLETADO = 'COMPLETADO',   // llegó a destino
-    CANCELADO  = 'CANCELADO'     // anulado antes de completar, con penalización
+
+    /**
+     * El cliente acaba de solicitar el viaje.
+     */
+    SOLICITADO = "SOLICITADO",
+
+    /**
+     * El sistema genera la cola de ofertas
+     * y busca un chofer.
+     */
+    BUSCANDO_CHOFER = "BUSCANDO_CHOFER",
+
+    /**
+     * Un chofer aceptó correctamente
+     * la asignación.
+     */
+    ASIGNADO = "ASIGNADO",
+
+    /**
+     * El viaje está en ejecución.
+     */
+    EN_CURSO = "EN_CURSO",
+
+    /**
+     * Todos los candidatos rechazaron. 
+     */
+    SIN_CHOFER      = "SIN_CHOFER",
+
+    /**
+     * El viaje terminó.
+     */
+    FINALIZADO = "FINALIZADO",
+
+    /**
+     * El viaje fue cancelado.
+     */
+    CANCELADO = "CANCELADO"
+
 }

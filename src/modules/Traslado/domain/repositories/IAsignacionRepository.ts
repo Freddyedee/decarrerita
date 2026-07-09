@@ -1,22 +1,39 @@
-// domain/repositories/IAsignacionRepository.ts
-
 import { AsignacionChofer } from "../entities/AsignacionChofer";
 
 export interface IAsignacionRepository {
 
-    /**
-     * Crea la cola completa de ofertas para un traslado,
-     * ya ordenada por prioridad.
-     */
     createBatch(asignaciones: AsignacionChofer[]): Promise<AsignacionChofer[]>;
+
+    findById(id: number): Promise<AsignacionChofer | null>;
 
     findByTrasladoId(trasladoId: number): Promise<AsignacionChofer[]>;
 
     update(asignacion: AsignacionChofer): Promise<AsignacionChofer>;
 
+    findSiguientePendiente(
+        trasladoId: number
+    ): Promise<AsignacionChofer | null>;
+
     /**
-     * Siguiente candidato pendiente en la cola,
-     * el de mayor prioridad que aún no ha respondido.
+     * Intenta aceptar una oferta únicamente
+     * si todavía permanece pendiente.
+     *
+     * Esta operación debe ser atómica
+     * (evita que dos choferes acepten
+     * simultáneamente).
      */
-    findSiguientePendiente(trasladoId: number): Promise<AsignacionChofer | null>;
+    aceptarSiSigueDisponible(
+        asignacionId: number
+    ): Promise<boolean>;
+
+    /**
+     * Cuando un chofer gana el viaje,
+     * todas las demás ofertas pendientes
+     * deben cerrarse automáticamente.
+     */
+    cerrarOfertasRestantes(
+        trasladoId: number,
+        asignacionGanadoraId: number
+    ): Promise<void>;
+
 }

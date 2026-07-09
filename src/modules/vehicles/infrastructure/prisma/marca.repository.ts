@@ -1,4 +1,4 @@
-import { prisma } from "@/infra/prisma/client";
+import { prisma } from "@/shared/lib/prisma";
 import { Marca } from "../../domain/entities/Marca";
 import { IMarcaRepository } from "../../domain/repositories/IMarcaRepository";
 import { marcaMapper } from "../mappers/marca.mapper";

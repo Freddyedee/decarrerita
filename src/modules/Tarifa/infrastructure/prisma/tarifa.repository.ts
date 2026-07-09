@@ -1,6 +1,6 @@
 // infrastructure/prisma/tarifa.repository.ts
 
-import { prisma } from "@/infra/prisma/client";
+import { prisma } from "@/shared/lib/prisma";
 import { Tarifa } from "../../domain/entities/Tarifa";
 import { ITarifaRepository } from "../../domain/repositories/ITarifaRepository";
 import { tarifaMapper } from "../mappers/tarifa.mapper";

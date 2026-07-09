@@ -1,6 +1,6 @@
 // infrastructure/prisma/revision.repository.ts
 
-import { prisma } from "@/infra/prisma/client";
+import { prisma } from "@/shared/lib/prisma";
 import { RevisionVehicular } from "../../domain/entities/RevisionVehicular";
 import { IRevisionRepository } from "../../domain/repositories/IRevisionVehicular";
 import { revisionMapper } from "../mappers/revision.mapper";

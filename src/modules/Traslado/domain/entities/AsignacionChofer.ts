@@ -17,13 +17,14 @@ export class AsignacionChofer{
         public readonly id: number,
         public readonly trasladoId: number, 
         public readonly choferId: number, 
+        public readonly vehiculoId: number, 
         public readonly prioridad: number, 
         public estadoRespuesta: EstadoRespuesta
     ){}
 
     aceptar(): void{
         if(this.estadoRespuesta !== EstadoRespuesta.PENDIENTE){ 
-            throw new Error('Cannot accept an offer already in state ${this.estadoRespuesta}'); 
+            throw new Error(`Cannot accept an offer already in state ${this.estadoRespuesta}`); 
         }
 
         this.estadoRespuesta = EstadoRespuesta.ACEPTADO; 
@@ -31,7 +32,7 @@ export class AsignacionChofer{
 
     rechazar(): void { 
         if(this.estadoRespuesta !== EstadoRespuesta.PENDIENTE){ 
-            throw new Error ('Cannot reject an offer already in state ${this.estadoRespuesta}');
+            throw new Error (`Cannot reject an offer already in state ${this.estadoRespuesta}`);
         }
 
         this.estadoRespuesta = EstadoRespuesta.RECHAZADO

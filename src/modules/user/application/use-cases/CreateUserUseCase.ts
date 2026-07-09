@@ -30,7 +30,7 @@ export class CreateUserUseCase {
         }
 
         const newUser = new User(
-            null,
+            null ,
             role,
             firstName,
             lastName,

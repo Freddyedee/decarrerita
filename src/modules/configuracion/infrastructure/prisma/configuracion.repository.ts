@@ -1,6 +1,6 @@
 // infrastructure/prisma/configuracion.repository.ts
 
-import { prisma } from "@/infra/prisma/client";
+import { prisma } from "@/shared/lib/prisma";
 import { IConfiguracionRepository } from "../../domain/repositories/IConfiguracionRepository";
 
 export class ConfiguracionRepository implements IConfiguracionRepository {

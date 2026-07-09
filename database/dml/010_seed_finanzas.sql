@@ -44,3 +44,6 @@ SELECT * from marca;
 SELECT id_marca, nombre FROM marca ORDER BY id_marca;
 
 SELECT * FROM tarifa; 
+
+select * from usuario; 
+select * from wallet
