@@ -1,6 +1,8 @@
 import { IWalletRepository } from "../../domain/ports/IWalletRepository"
 import { IConfiguracionRepository } from "@/modules/configuracion/domain/repositories/IConfiguracionRepository";
 import { IWalletService } from "../../domain/ports/IWalletServices";
+import { Prisma } from "@prisma/client";
+
 
 export class WalletService implements IWalletService { 
 
@@ -30,25 +32,25 @@ export class WalletService implements IWalletService {
      * todavía — el chofer cobra recién al completar).
      */
 
-     async debitarCliente(clienteId: number, monto:number, trasladoId: number): Promise<void> { 
+     async debitarCliente(clienteId: number, monto:number, trasladoId: number, tx?: Prisma.TransactionClient): Promise<void> { 
 
-        const walletCliente = await this.getWallet(clienteId); 
+        const walletCliente = await this.walletRepository.findByUsuarioId(clienteId, tx); 
         const empresaId = await this.getEmpresaUsuarioId(); 
-        const walletEmpresa = await this.getWallet(empresaId); 
+        const walletEmpresa = await this.walletRepository.findByUsuarioId(empresaId, tx); 
 
-        walletCliente.debitar(monto); // valida saldo suficiente y bloqueo 
+        walletCliente!.debitar(monto);
 
         await this.walletRepository.updateWithMovement(
-            walletCliente, "DEBITO_TRASLADO", monto, 
-            walletCliente.saldoDisponible + monto, trasladoId, 
+            walletCliente!, "DEBITO_TRASLADO", monto, 
+            walletCliente!.saldoDisponible + monto, trasladoId, 
             `Pago de traslado #${trasladoId}`
         );
 
-        walletEmpresa.acreditar(monto); 
+        walletEmpresa!.acreditar(monto); 
 
         await this.walletRepository.updateWithMovement(
-            walletEmpresa, "COBRO_TRASLADO", monto, 
-            walletEmpresa.saldoDisponible - monto, trasladoId, 
+            walletEmpresa!, "COBRO_TRASLADO", monto, 
+            walletEmpresa!.saldoDisponible - monto, trasladoId, 
             `Cobro de traslado #${trasladoId} (pendiente de reparto)`
         ); 
      }

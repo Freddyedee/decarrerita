@@ -37,7 +37,7 @@ export class SolicitarTrasladoUseCase{
         const cliente = await this.clientRepository.findByUserId(input.clienteId); 
 
         if(!cliente){
-            throw  new Error('Client with id ${input.clienteId} not found'); 
+            throw  new Error(`Client with id ${input.clienteId} not found`); 
         }
 
         //2. Validacion: debe existir una tarifa previa en el sistema, lo cual significa que debe estar vigente para calcular el costo. 
@@ -57,7 +57,7 @@ export class SolicitarTrasladoUseCase{
         const vehiculosActivos = await this.vehicleRepository.findAllActive();
 
         if(vehiculosActivos.length == 0){ 
-            throw new Error('No available drivirs at this moment');
+            throw new Error('No available drivers at this moment');
         }
 
         // 4. PRIORIDAD: se ordenan los candidatos por el puntaje , promedio de cada chofer (mayor puntaje, mayor prioridad).
@@ -88,7 +88,7 @@ export class SolicitarTrasladoUseCase{
             primero.choferId, 
             primero.vehiculoId, 
             tarifa.id, 
-            input.origenLat, 
+            input.origenlat, 
             input.origenlng,
             input.destinolat, 
             input.destinolng,

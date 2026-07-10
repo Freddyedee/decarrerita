@@ -1,8 +1,9 @@
+import { Prisma } from "@prisma/client";
 import { Wallet } from "../entities/Wallet";
 
 export interface IWalletRepository {
 
-    findByUsuarioId(usuarioId: number): Promise <Wallet | null>
+    findByUsuarioId(usuarioId: number, tx?: Prisma.TransactionClient ): Promise <Wallet | null>
 
     /**
      * Persiste el nuevo saldo Y registra el movimiento en
@@ -19,6 +20,7 @@ export interface IWalletRepository {
         saldoAnterior: number,
         trasladoId: number | null, 
         descripcion: string, 
+        tx?: Prisma.TransactionClient
 
     ): Promise <Wallet>; 
 }

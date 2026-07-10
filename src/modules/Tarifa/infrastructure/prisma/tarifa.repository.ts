@@ -42,4 +42,11 @@ export class TarifaRepository implements ITarifaRepository {
             data: { fecha_fin_vigencia: fechaFin }
         });
     }
+
+    async findById(id:number): Promise<Tarifa | null>{
+        const tarifa = await prisma.tarifa.findUnique ({ where : { id_tarifa: id}}); 
+        return tarifa ? tarifaMapper.toDomain(tarifa) : null;  
+
+    }
+
 }

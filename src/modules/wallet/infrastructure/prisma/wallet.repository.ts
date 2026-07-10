@@ -4,12 +4,14 @@ import { prisma } from "@/shared/lib/prisma";
 import { Wallet } from "../../domain/entities/Wallet";
 import { IWalletRepository } from "../../domain/ports/IWalletRepository";
 import { walletMapper } from "./wallet.mapper";
+import { Prisma } from "@prisma/client";
 
 export class WalletRepository implements IWalletRepository {
 
-    async findByUsuarioId(usuarioId: number): Promise<Wallet | null> {
+    async findByUsuarioId(usuarioId: number, tx?: Prisma.TransactionClient): Promise<Wallet | null> {
 
-        const wallet = await prisma.wallet.findUnique({
+        const client = tx ?? prisma; 
+        const wallet = await client.wallet.findUnique({
             where: { id_usuario: usuarioId }
         });
 
@@ -28,30 +30,29 @@ export class WalletRepository implements IWalletRepository {
         monto: number,
         saldoAnterior: number,
         trasladoId: number | null,
-        descripcion: string
+        descripcion: string, 
+        tx?: Prisma.TransactionClient
+
     ): Promise<Wallet> {
 
-        const [updated] = await prisma.$transaction([
+        const client = tx ?? prisma;    // Operador de coalescencia nula. Este le dice al repository "si me proporcionaron una transsaccion tx usula
+                                        // caso contrario null o undefined, usa el cliente de prisma por defecto" 
 
-            prisma.wallet.update({
-                where: { id_wallet: wallet.id },
-                data: { saldo_disponible: wallet.saldoDisponible }
-            }),
+        const updated = await client.wallet.update({
+            where: { id_wallet: wallet.id}, 
+            data: {saldo_disponible: wallet.saldoDisponible}
+        })
 
-            prisma.movimiento_wallet.create({
-                data: {
-                    id_wallet:        wallet.id,
-                    id_traslado:      trasladoId,
-                    tipo_movimiento:  tipoMovimiento,
-                    monto:            monto,
-                    saldo_anterior:   saldoAnterior,
-                    saldo_posterior:  wallet.saldoDisponible,
-                    descripcion:      descripcion
-                }
-            })
+        await client.movimiento_wallet.create({
 
-        ]);
-
+            data: {
+                id_wallet: wallet.id, id_traslado: trasladoId, 
+                tipo_movimiento: tipoMovimiento, monto, 
+                saldo_anterior: saldoAnterior, saldo_posterior: wallet.saldoDisponible,
+                descripcion
+            }
+        }); 
+    
         return walletMapper.toDomain(updated);
     }
 }

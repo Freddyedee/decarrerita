@@ -1,6 +1,6 @@
 export interface SolicitarTrasladoDTO{
     clienteId: number, 
-    origenLat: number,
+    origenlat: number,
     origenlng: number, 
     destinolat: number,
     destinolng: number,

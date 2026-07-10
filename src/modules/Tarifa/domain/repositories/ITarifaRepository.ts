@@ -8,4 +8,6 @@ export interface ITarifaRepository {
     findVigente(referenceDate?: Date): Promise<Tarifa | null>;
     findAll(): Promise<Tarifa[]>;
     closeVigencia(id: number, fechaFin: Date): Promise<void>;
+    findById(id: number): Promise<Tarifa | null>;
+
 }
