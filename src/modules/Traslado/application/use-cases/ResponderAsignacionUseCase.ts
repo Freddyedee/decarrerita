@@ -33,7 +33,9 @@ export class ResponderAsignacionUseCase {
     constructor(
         private readonly trasladoRepository: ITrasladoRepository,
         private readonly asignacionRepository: IAsignacionRepository,
-        private readonly historialRepository: IHistorialTrasladoRepository
+        private readonly historialRepository: IHistorialTrasladoRepository,
+        private readonly walletService: IWalletService
+
     ) {}
 
        /**

@@ -14,6 +14,8 @@ import { IVehicleRepository } from "@/modules/vehicles/domain/repositories/IVehi
 import { ITarifaRepository } from "@/modules/Tarifa/domain/repositories/ITarifaRepository";
 import { IClientRepository } from "@/modules/user/application/ports/IClientRepository";
 import { IDriverRepository } from "@/modules/user/application/ports/IDriverRepository";
+import { IWalletService } from "@/modules/wallet/domain/ports/IWalletServices";
+
 
 export class SolicitarTrasladoUseCase{ 
 
@@ -26,7 +28,8 @@ export class SolicitarTrasladoUseCase{
         private readonly vehicleRepository: IVehicleRepository,
         private readonly tarifaRepository: ITarifaRepository,
         private readonly clientRepository: IClientRepository,
-        private readonly driverRepository: IDriverRepository
+        private readonly driverRepository: IDriverRepository, 
+        private readonly walletServices: IWalletService
     ){}
 
 
@@ -38,6 +41,14 @@ export class SolicitarTrasladoUseCase{
 
         if(!cliente){
             throw  new Error(`Client with id ${input.clienteId} not found`); 
+        }
+        
+        //1.5 RN-025: un cliente con saldo negativo (deuda por penalizacion pendiente) no puede solicitar nuevos viajes hasta regularizar. 
+
+        const canOperateClient = await this.walletServices.canOperate(input.clienteId); 
+
+        if(!canOperateClient) { 
+            throw new Error("Client has a negative balance and cannot request new trips until it is regularized")
         }
 
         //2. Validacion: debe existir una tarifa previa en el sistema, lo cual significa que debe estar vigente para calcular el costo. 

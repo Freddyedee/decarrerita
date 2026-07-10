@@ -37,4 +37,12 @@ export interface IWalletService {
     aplicarPenalizacion(usuarioId: number, monto: number, trasladoId: number, motivo: string, tx?: Prisma.TransactionClient): Promise<void>;
 
     reembolsarConPenalizacion( clienteId: number, montoTotal: number, penalizacion: number, trasladoId: number, tx?: Prisma.TransactionClient): Promise<void>;
+
+     /**
+     * RN-025: verifica si un usuario puede iniciar una nueva
+     * operación económica (solicitar viaje, aceptar viaje).
+     * Devuelve false si su wallet está bloqueada o en saldo
+     * negativo por una penalización pendiente de regularizar.
+     */
+    canOperate(usuarioId: number): Promise<boolean>;
 }

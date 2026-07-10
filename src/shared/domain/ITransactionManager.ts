@@ -11,5 +11,4 @@ export interface ITransactionManager {
 
     run<T>(callback: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>; 
 
-
 }

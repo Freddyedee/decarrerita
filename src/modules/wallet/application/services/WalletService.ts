@@ -135,4 +135,44 @@ export class WalletService implements IWalletService {
         );
     }
 
+
+    /**
+     * RN-025: usa debitarPenalizacion() en vez de debitar() — la
+     * penalización SIEMPRE se aplica, incluso si deja al usuario
+     * en saldo negativo. La consecuencia de esa deuda se resuelve
+     * en otro punto (canOperate), no bloqueando la penalización
+     * misma. Esto es intencional: la empresa no debe perder el
+     * derecho a cobrar la penalización solo porque el usuario no
+     * tenga fondos en ese instante.
+     */
+
+    async applyPenalization(
+        usuarioId:  number, monto: number, trasladoId: number, motivo: string, tx?: Prisma.TransactionClient
+    ): Promise <void> {
+
+        const wallet = await this.walletRepository.findByUsuarioId(usuarioId, tx); 
+
+        if(!wallet) throw new Error(`Wallet not found for usuario ${usuarioId}`); 
+
+        const previousBalance = wallet.saldoDisponible; 
+        wallet.toDebitPenalization(monto);
+
+        await this.walletRepository.updateWithMovement(wallet, "PENALIZACION", monto, previousBalance, trasladoId, motivo, tx); 
+
+    }
+
+    /**
+     * RN-025: consulta de solo lectura, usada por Traslados ANTES
+     * de permitir que un cliente solicite un viaje o que un chofer
+     * acepte uno.
+     */
+
+    async canOperate(usuarioId: number): Promise <boolean> {
+
+        const wallet = await this.walletRepository.findByUsuarioId(usuarioId); 
+
+        if(!wallet) throw new Error (`Wallet not found for usuario ${usuarioId}`); 
+
+        return wallet.canStartNewOperation();
+    }
 }
