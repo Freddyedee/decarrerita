@@ -35,6 +35,7 @@ import { GetAllMarcasUseCase } from "../application/use-cases/GetAllMarcasUseCas
 import { MarcaController } from "./marca.controller";
 import { CreateMarcaUseCase } from "../application/use-cases/CreateMarcaUseCase";
 
+
 /* ============================================================
  * REPOSITORIES
  * ============================================================
@@ -104,3 +105,4 @@ export const revisionController = new RevisionController(
 
 export const marcaController = new MarcaController(createMarcaUseCase, getAllMarcasUseCase);
 
+export { vehicleRepository }

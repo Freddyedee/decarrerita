@@ -85,4 +85,10 @@ export class PrismaDriverRepository implements IDriverRepository {
 
     }
 
+    async findPuntajeByChoferId(id: number): Promise<Driver> {
+        const driver = await this.prisma.chofer.findUnique({ where: { id_usuario: id } });
+        if (!driver) throw new Error("Driver not found");
+        return this.toDomain(driver);
+
+    }
 }

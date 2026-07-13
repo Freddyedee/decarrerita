@@ -59,4 +59,27 @@ COMMIT;
 
 SELECT * FROM usuario;
 
+SELECT * from wallet
+
+INSERT INTO usuario (id_rol, nombre, apellido, email, password_hash, estado)
+VALUES (2, 'Ana', 'Prueba', 'ana@cliente.com', 'N/A', 'activo');
+
+INSERT INTO cliente (id_usuario, rating_promedio)
+SELECT id_usuario, 5.00
+FROM usuario WHERE email = 'ana@cliente.com';
+
+-- se visualiza que la wallet se creo automaticamente, esto se debe a un tiirgger tengo que mejorar ese apartado recuerda. 
+INSERT INTO wallet (id_usuario, saldo_disponible)
+SELECT id_usuario, 200.00
+FROM usuario WHERE email = 'ana@cliente.com';
+
+select * from wallet
+
+UPDATE wallet SET saldo_disponible = 200.00 WHERE id_usuario = 5;
+
+select * from usuario;
+
+
+EOF
+
 

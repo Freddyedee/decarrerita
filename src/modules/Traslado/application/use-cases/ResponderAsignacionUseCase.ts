@@ -1,3 +1,4 @@
+import { IVehicleRepository } from "@/modules/vehicles/domain/repositories/IVehicleRepository";
 import { EstadoRespuesta } from "../../domain/Enum/EstadoRespuesta";
 import { EstadoTraslado } from "../../domain/Enum/EstadoTraslado";
 
@@ -6,6 +7,9 @@ import { IHistorialTrasladoRepository } from "../../domain/repositories/IHistori
 import { ITrasladoRepository } from "../../domain/repositories/ITrasladoRepository";
 
 import { ResponderAsignacionDTO } from "../dto/ResponderAsignacionDto";
+
+import { IWalletService } from "@/modules/wallet/domain/ports/IWalletServices";
+import { VehicleStatus } from "@/modules/vehicles/domain/enum/VehicleStatus";
 
 /**
  * ============================================================
@@ -34,7 +38,8 @@ export class ResponderAsignacionUseCase {
         private readonly trasladoRepository: ITrasladoRepository,
         private readonly asignacionRepository: IAsignacionRepository,
         private readonly historialRepository: IHistorialTrasladoRepository,
-        private readonly walletService: IWalletService
+        private readonly walletService: IWalletService,
+        private readonly vehicleRepository: IVehicleRepository
 
     ) {}
 
@@ -113,8 +118,19 @@ export class ResponderAsignacionUseCase {
         //5. Consolidación del traslado
         asignacion.aceptar();
 
+        //Se deriva el vehiculo activo del chofer en este instante, esto se debe a la regla que solo se permite una vehiculo activo por chofer. 
+
+        const vehiculosDelChofer = await this.vehicleRepository.findByDriverId(asignacion.choferId); 
+        const vehiculoActivo = vehiculosDelChofer.find(v => v.status === VehicleStatus.ACTIVE); 
+
+        if(!vehiculoActivo) {
+            throw new Error(`Driver ${asignacion.choferId} has no active vehicle at this moment`);
+        }
+
+
+
         //Se invoca el método de dominio (Regla de negocio RN-019)
-        traslado.asignarChofer(asignacion.choferId, asignacion.vehiculoId);
+        traslado.asignarChofer(asignacion.choferId, vehiculoActivo.id);
         
         //6.Persistencia y cierre 
         await this.asignacionRepository.update(asignacion);
@@ -127,7 +143,7 @@ export class ResponderAsignacionUseCase {
         await this.historialRepository.registrarCambio(
             traslado.id,
             EstadoTraslado.BUSCANDO_CHOFER,
-            EstadoTraslado.ASIGNADO,
+            EstadoTraslado.EN_CAMINO,
             `Driver ${asignacion.choferId} accepted assignment`
         );
 

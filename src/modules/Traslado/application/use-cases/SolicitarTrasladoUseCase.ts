@@ -45,7 +45,7 @@ export class SolicitarTrasladoUseCase{
         
         //1.5 RN-025: un cliente con saldo negativo (deuda por penalizacion pendiente) no puede solicitar nuevos viajes hasta regularizar. 
 
-        const canOperateClient = await this.walletServices.canOperate(input.clienteId); 
+        const canOperateClient = await this.walletServices.puedeOperar(input.clienteId); 
 
         if(!canOperateClient) { 
             throw new Error("Client has a negative balance and cannot request new trips until it is regularized")
@@ -132,7 +132,6 @@ export class SolicitarTrasladoUseCase{
             0, 
             savedTraslado.id, 
             candidato.choferId,
-            candidato.vehiculoId, 
             index + 1, // prioridad; 1 = primero en la cola.
             EstadoRespuesta.PENDIENTE
         )

@@ -44,5 +44,5 @@ export interface IWalletService {
      * Devuelve false si su wallet está bloqueada o en saldo
      * negativo por una penalización pendiente de regularizar.
      */
-    canOperate(usuarioId: number): Promise<boolean>;
+    puedeOperar(usuarioId: number): Promise<boolean>;
 }

@@ -13,7 +13,7 @@ CREATE TABLE traslado (
     costo_estimado DECIMAL(12,2) NOT NULL,
 	
     estado_actual VARCHAR(30) NOT NULL DEFAULT 'SOLICITADO' 
-        CHECK (estado_actual IN ('SOLICITADO', 'ASIGNADO', 'EN_CAMINO', 'EN_CURSO', 'FINALIZADO', 'CANCELADO')),
+        CHECK (estado_actual IN ('SOLICITADO', 'ASIGNADO', 'EN_CAMINO', 'EN_CURSO', 'FINALIZADO', 'CANCELADO', 'BUSCANDO_CHOFER', 'SIN_CHOFER')),
     
 	fecha_solicitud TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
@@ -21,4 +21,9 @@ CREATE TABLE traslado (
     CONSTRAINT fk_traslado_chofer FOREIGN KEY (id_chofer) REFERENCES chofer(id_usuario),
     CONSTRAINT fk_traslado_vehiculo FOREIGN KEY (id_vehiculo) REFERENCES vehiculo(id_vehiculo),
     CONSTRAINT fk_traslado_tarifa FOREIGN KEY (id_tarifa) REFERENCES tarifa(id_tarifa)
+
+
 );
+
+
+

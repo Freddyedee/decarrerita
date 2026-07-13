@@ -68,21 +68,7 @@ export class Traslado {
      * ASIGNADO
      */
 
-    /**
-     * Un chofer aceptó. Recibe el id real del chofer y vehículo
-     * ganadores — pueden no coincidir con los provisionales
-     * usados al crear el traslado, si el primero de la cola
-     * no fue quien aceptó.
-     */
-    asignarChofer(choferId: number, vehiculoId: number): void {
-
-        if (this.estadoActual !== EstadoTraslado.BUSCANDO_CHOFER) {
-            throw new Error(`Cannot assign driver from state ${this.estadoActual}`);
-        }
-        this.choferId = choferId;
-        this.vehiculoId = vehiculoId;
-        this.estadoActual = EstadoTraslado.ASIGNADO;
-    }
+    
 
      /**
      * Todos los candidatos de la cola rechazaron.
@@ -101,19 +87,38 @@ export class Traslado {
      *      ↓
      * EN_CURSO
      */
-    iniciar(): void {
 
-        if (this.estadoActual !== EstadoTraslado.ASIGNADO) {
-
-            throw new Error(
-                `Cannot start trip from state ${this.estadoActual}`
-            );
-
+    /**
+     * Un chofer aceptó. Pasa directo a EN_CAMINO (no se queda
+     * en un ASIGNADO intermedio) porque, en la práctica, aceptar
+     * y comenzar a dirigirse hacia el cliente son el mismo evento
+     * desde la perspectiva del negocio — EN_CAMINO es puramente
+     * informativo para la UI del cliente ("tu chofer va en camino"),
+     * sin lógica de negocio adicional en esta transición.
+     */
+    asignarChofer(choferId: number, vehiculoId: number): void {
+        if (this.estadoActual !== EstadoTraslado.BUSCANDO_CHOFER) {
+            throw new Error(`Cannot assign driver from state ${this.estadoActual}`);
         }
-
-        this.estadoActual = EstadoTraslado.EN_CURSO;
-
+        this.choferId = choferId;
+        this.vehiculoId = vehiculoId;
+        this.estadoActual = EstadoTraslado.EN_CAMINO
     }
+
+    /**
+     * El cliente confirma que abordó — inicia el recorrido real.
+     * AQUÍ ocurre el cobro (ver IniciarTrasladoUseCase), porque
+     * es el primer momento donde existe certeza de que el servicio
+     * efectivamente se está prestando.
+     */
+    iniciar(): void {
+        if (this.estadoActual !== EstadoTraslado.EN_CAMINO) {
+            throw new Error(`Cannot start trip from state ${this.estadoActual}`);
+        }
+        this.estadoActual = EstadoTraslado.EN_CURSO;
+    }
+
+  
 
     /**
      * El viaje termina correctamente.
@@ -214,5 +219,8 @@ export class Traslado {
         return this.estadoActual === EstadoTraslado.EN_CURSO
             || this.estadoActual === EstadoTraslado.FINALIZADO;
     }
+
+
+
 
 }

@@ -20,12 +20,12 @@ export class Wallet {
     /**
      * Una wallet bloqueada no puede debitar ni acreditar.
      */
-    canOperate(): boolean {
+    puedeOperar(): boolean {
         return !this.estadoBloqueo;
     }
 
     tieneSaldoSuficiente(monto: number): boolean {
-        return this.canOperate() && this.saldoDisponible >= monto;
+        return this.puedeOperar() && this.saldoDisponible >= monto;
     }
    
 
@@ -37,12 +37,12 @@ export class Wallet {
      * el cobro/pago en sí.
      */
 
-      negativeBalance(): boolean {
+      tieneSaldoNegativo(): boolean {
         return this.saldoDisponible < 0; 
       }
 
-      canStartNewOperation(): boolean{
-        return this.canOperate() && !this.negativeBalance();
+      puedeIniciarNuevaOperacion(): boolean{
+        return this.puedeOperar() && !this.tieneSaldoNegativo();
       }
 
     /**
@@ -52,7 +52,7 @@ export class Wallet {
      */
 
      debitar(monto: number): void {
-        if (!this.canOperate()) {
+        if (!this.puedeOperar()) {
             throw new Error("Wallet is blocked");
         }
         if (this.saldoDisponible < monto) {
@@ -72,7 +72,7 @@ export class Wallet {
      */
 
      toDebitPenalization(monto: number): void {
-        if(!this.canOperate()){
+        if(!this.puedeOperar()){
             throw new Error("Wallet is blocked");
         }
 
@@ -88,12 +88,31 @@ export class Wallet {
      */
      
     acreditar(monto: number): void {
-        if (!this.canOperate()) {
+        if (!this.puedeOperar()) {
             throw new Error("Wallet is blocked");
         }
         this.saldoDisponible += monto;
     }
-     
+
+        /**
+     * Débito por PENALIZACIÓN (RN-025). A diferencia de debitar(),
+     * esta operación SÍ puede dejar saldo negativo — la penalización
+     * es una deuda que el negocio tiene derecho a cobrar, incluso si
+     * el usuario no tiene fondos en este momento. La consecuencia no
+     * es bloquear esta operación, sino bloquear las FUTURAS (ver
+     * puedeIniciarNuevaOperacion), que se valida en otro punto del
+     * flujo, no aquí.
+     */
+    debitarPenalizacion(monto: number): void {
+        console.log(">>> ENTRANDO A debitarPenalizacion, saldo actual:", this.saldoDisponible, "monto:", monto);
+        if (!this.puedeOperar()) {
+            throw new Error("Wallet is blocked");
+        }
+        this.saldoDisponible -= monto; // sin validar suficiencia, a propósito
+        console.log(">>> SALIENDO DE debitarPenalizacion, nuevo saldo:", this.saldoDisponible);
+
+    }
+        
 
 
 

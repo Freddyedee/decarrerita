@@ -10,3 +10,6 @@ ON usuario(email);
 --Índice 3: wallet lookup
 CREATE INDEX idx_wallet_usuario
 ON wallet(id_usuario);
+
+select * from rol; 
+select * from usuario

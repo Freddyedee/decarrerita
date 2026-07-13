@@ -14,4 +14,4 @@ export const tarifaController = new TarifaController(createTarifaUseCase, getTar
 
 
 
-export { TarifaRepository}
+export { tarifaRepository}

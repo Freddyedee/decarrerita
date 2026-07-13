@@ -23,6 +23,7 @@ EXECUTE FUNCTION fn_crear_wallet_usuario();
 INSERT INTO usuario ( id_rol, nombre, apellido, email, telefono, password_hash, estado) VALUES (1, 'Test', 'User', 'test@test.com', '000', 'hash', 'activo'); 
 INSERT INTO usuario ( id_rol, nombre, apellido, email, telefono, password_hash, estado) VALUES (1, 'Pedro', 'User', 'pedro@pedro.com', '0414587889000', 'hash', 'activo'); 
 
+INSERT INTO usuario ( id_rol, nombre, apellido, email, telefono, password_hash, estado) VALUES (2, 'freddy', 'marcano', 'freddy@freddy.com', '04249545985', 'hash', 'activo'); 
 SELECT u.nombre, u.apellido, w.id_wallet, w.id_usuario ,w.saldo_disponible FROM usuario u  JOIN wallet w ON u.id_usuario = w.id_usuario;
 
 --TRIGGER 2 - AUDITORIA DE TRASLADOS
@@ -53,6 +54,16 @@ SET estado_actual = 'EN_CURSO'
 WHERE id_traslado = 1;
 
 SELECT * FROM historial_estado_traslado;
+
+select * from usuario
+
+select * from wallet; 
+select * from cliente; 
+
+
+
+
+
 
 
 

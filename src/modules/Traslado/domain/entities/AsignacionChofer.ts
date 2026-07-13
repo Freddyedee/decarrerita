@@ -17,7 +17,6 @@ export class AsignacionChofer{
         public readonly id: number,
         public readonly trasladoId: number, 
         public readonly choferId: number, 
-        public readonly vehiculoId: number, 
         public readonly prioridad: number, 
         public estadoRespuesta: EstadoRespuesta
     ){}

@@ -15,7 +15,7 @@ export enum EstadoTraslado {
      * Un chofer aceptó correctamente
      * la asignación.
      */
-    ASIGNADO = "ASIGNADO",
+    //ASIGNADO = "ASIGNADO",
 
     /**
      * El viaje está en ejecución.
@@ -35,6 +35,8 @@ export enum EstadoTraslado {
     /**
      * El viaje fue cancelado.
      */
-    CANCELADO = "CANCELADO"
+    CANCELADO = "CANCELADO",
+
+    EN_CAMINO = "EN_CAMINO"
 
 }

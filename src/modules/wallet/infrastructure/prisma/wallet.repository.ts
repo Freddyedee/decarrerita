@@ -38,10 +38,17 @@ export class WalletRepository implements IWalletRepository {
         const client = tx ?? prisma;    // Operador de coalescencia nula. Este le dice al repository "si me proporcionaron una transsaccion tx usula
                                         // caso contrario null o undefined, usa el cliente de prisma por defecto" 
 
+        console.log("=== UPDATE WITH MOVEMENT ===");
+        console.log("wallet.id:", wallet.id);
+        console.log("wallet.saldoDisponible que se va a persistir:", wallet.saldoDisponible);
+
         const updated = await client.wallet.update({
             where: { id_wallet: wallet.id}, 
             data: {saldo_disponible: wallet.saldoDisponible}
         })
+
+        console.log("valor que Postgres devolvió tras el update:", updated.saldo_disponible);
+
 
         await client.movimiento_wallet.create({
 

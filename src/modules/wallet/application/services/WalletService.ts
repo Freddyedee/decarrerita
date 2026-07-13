@@ -18,8 +18,8 @@ export class WalletService implements IWalletService {
         return Number(valor);
     }
 
-    private async getWallet(usuarioId: number) {
-        const wallet = await this.walletRepository.findByUsuarioId(usuarioId);
+    private async getWallet(usuarioId: number, tx? : Prisma.TransactionClient) {
+        const wallet = await this.walletRepository.findByUsuarioId(usuarioId, tx);
         if (!wallet) {
             throw new Error(`Wallet not found for usuario ${usuarioId}`);
         }
@@ -41,17 +41,19 @@ export class WalletService implements IWalletService {
         walletCliente!.debitar(monto);
 
         await this.walletRepository.updateWithMovement(
-            walletCliente!, "DEBITO_TRASLADO", monto, 
+            walletCliente!, "PAGO_TRASLADO", monto, 
             walletCliente!.saldoDisponible + monto, trasladoId, 
-            `Pago de traslado #${trasladoId}`
+            `Pago de traslado #${trasladoId}`,
+            tx
         );
 
         walletEmpresa!.acreditar(monto); 
 
         await this.walletRepository.updateWithMovement(
-            walletEmpresa!, "COBRO_TRASLADO", monto, 
+            walletEmpresa!, "PAGO_TRASLADO", monto, 
             walletEmpresa!.saldoDisponible - monto, trasladoId, 
-            `Cobro de traslado #${trasladoId} (pendiente de reparto)`
+            `Cobro de traslado #${trasladoId} (pendiente de reparto)`,
+            tx
         ); 
      }
 
@@ -64,26 +66,28 @@ export class WalletService implements IWalletService {
      * desde el débito del cliente).
      */
 
-      async creditarChofer(choferId: number, monto: number, trasladoId: number): Promise <void>{
+      async creditarChofer(choferId: number, monto: number, trasladoId: number, tx?: Prisma.TransactionClient): Promise <void>{
 
         const empresaId = await this.getEmpresaUsuarioId(); 
-        const walletEmpresa = await this.getWallet(empresaId); 
-        const walletChofer = await this.getWallet(choferId); 
+        const walletEmpresa = await this.getWallet(empresaId, tx); 
+        const walletChofer = await this.getWallet(choferId, tx); 
 
         walletEmpresa.debitar(monto); 
 
         await this.walletRepository.updateWithMovement(
-            walletEmpresa, "PAGO_CHOFER", monto, 
+            walletEmpresa, "PAGO_TRASLADO", monto, 
             walletEmpresa.saldoDisponible + monto, trasladoId, 
-            `Pago a chofer por traslado #${trasladoId}`
+            `Pago a chofer por traslado #${trasladoId}`,
+            tx
         );
         
         walletChofer.acreditar(monto); 
 
         await this.walletRepository.updateWithMovement(
-            walletChofer, "CREDITO_TRASLADO", monto, 
+            walletChofer, "PAGO_TRASLADO", monto, 
             walletChofer.saldoDisponible - monto, trasladoId, 
-            `Cobro por traslado #${trasladoId}`
+            `Cobro por traslado #${trasladoId}`,
+            tx
         ); 
       }
 
@@ -92,15 +96,27 @@ export class WalletService implements IWalletService {
      * se descuenta la penalización fija directo de quien canceló.
      */
 
-    async aplicarPenalizacion(usuarioId: number, monto: number, trasladoId: number, motivo: string): Promise<void> {
+    async aplicarPenalizacion(usuarioId: number, monto: number, trasladoId: number, motivo: string, tx? : Prisma.TransactionClient): Promise<void> {
         
-        const wallet = await this.getWallet(usuarioId); 
-        wallet.debitar(monto); 
+        const wallet = await this.walletRepository.findByUsuarioId(usuarioId, tx); 
+        if(!wallet) throw new Error(`Wallet not found for usuario ${usuarioId}`); 
+
+        console.log("=== APLICAR PENALIZACION ===");
+        console.log("usuarioId:", usuarioId);
+        console.log("monto a penalizar:", monto);
+        console.log("saldo ANTES de penalizar:", wallet.saldoDisponible);
+
+        const saldoAnterior = wallet.saldoDisponible; 
+        wallet.debitarPenalizacion(monto); 
 
         await this.walletRepository.updateWithMovement(
-            wallet, "PENALZIACION" , monto,
-            wallet.saldoDisponible + monto, trasladoId, motivo 
+            wallet, "PENALIZACION" , monto,
+            saldoAnterior, trasladoId, motivo,
+            tx
         ); 
+
+        console.log("=== FIN APLICAR PENALIZACION ===");
+
     }
 
 
@@ -111,55 +127,39 @@ export class WalletService implements IWalletService {
      */
 
     async reembolsarConPenalizacion(
-        clienteId: number, montoTotal: number, penalizacion: number, trasladoId: number
+        clienteId: number, montoTotal: number, penalizacion: number, trasladoId: number, tx: Prisma.TransactionClient
     ): Promise<void> {
 
         const montoReembolso = montoTotal - penalizacion;
 
         const empresaId = await this.getEmpresaUsuarioId();
-        const walletEmpresa = await this.getWallet(empresaId);
-        const walletCliente = await this.getWallet(clienteId);
+        const walletEmpresa = await this.walletRepository.findByUsuarioId(empresaId, tx); 
+        if(!walletEmpresa) throw new Error(`wallet not found for usuario ${empresaId}`)
+            
+        const walletCliente = await this.walletRepository.findByUsuarioId(clienteId, tx);
+        if(!walletCliente) throw new Error(`wallet not found for usuario ${clienteId}`);
 
+        const saldoAnteriorEmpresa = walletEmpresa.saldoDisponible; 
         walletEmpresa.debitar(montoReembolso);
+
+
         await this.walletRepository.updateWithMovement(
-            walletEmpresa, "REEMBOLSO_TRASLADO", montoReembolso,
-            walletEmpresa.saldoDisponible + montoReembolso, trasladoId,
+            walletEmpresa, "REVERSO", montoReembolso,
+            saldoAnteriorEmpresa, trasladoId, 
             `Reembolso parcial traslado #${trasladoId} (penalización retenida: ${penalizacion})`
         );
 
+        const saldoAnteriorCliente = walletCliente.saldoDisponible; 
+
         walletCliente.acreditar(montoReembolso);
         await this.walletRepository.updateWithMovement(
-            walletCliente, "REEMBOLSO_TRASLADO", montoReembolso,
-            walletCliente.saldoDisponible - montoReembolso, trasladoId,
+            walletCliente, "REVERSO", montoReembolso,
+            saldoAnteriorCliente, trasladoId,
             `Reembolso por cancelación de traslado #${trasladoId}`
         );
     }
 
 
-    /**
-     * RN-025: usa debitarPenalizacion() en vez de debitar() — la
-     * penalización SIEMPRE se aplica, incluso si deja al usuario
-     * en saldo negativo. La consecuencia de esa deuda se resuelve
-     * en otro punto (canOperate), no bloqueando la penalización
-     * misma. Esto es intencional: la empresa no debe perder el
-     * derecho a cobrar la penalización solo porque el usuario no
-     * tenga fondos en ese instante.
-     */
-
-    async applyPenalization(
-        usuarioId:  number, monto: number, trasladoId: number, motivo: string, tx?: Prisma.TransactionClient
-    ): Promise <void> {
-
-        const wallet = await this.walletRepository.findByUsuarioId(usuarioId, tx); 
-
-        if(!wallet) throw new Error(`Wallet not found for usuario ${usuarioId}`); 
-
-        const previousBalance = wallet.saldoDisponible; 
-        wallet.toDebitPenalization(monto);
-
-        await this.walletRepository.updateWithMovement(wallet, "PENALIZACION", monto, previousBalance, trasladoId, motivo, tx); 
-
-    }
 
     /**
      * RN-025: consulta de solo lectura, usada por Traslados ANTES
@@ -167,12 +167,12 @@ export class WalletService implements IWalletService {
      * acepte uno.
      */
 
-    async canOperate(usuarioId: number): Promise <boolean> {
+    async puedeOperar(usuarioId: number): Promise <boolean> {
 
         const wallet = await this.walletRepository.findByUsuarioId(usuarioId); 
 
         if(!wallet) throw new Error (`Wallet not found for usuario ${usuarioId}`); 
 
-        return wallet.canStartNewOperation();
+        return wallet.puedeIniciarNuevaOperacion();
     }
 }
