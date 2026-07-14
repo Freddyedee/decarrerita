@@ -14,11 +14,20 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
       },
     },
+    fontFamily: {
+      display: ["var(--font-display)"],
+       sans: ["var(--font-body)"],
+       mono: ["var(--font-mono)"],
+       }
   },
   plugins: [],
+  
 };
 export default config;

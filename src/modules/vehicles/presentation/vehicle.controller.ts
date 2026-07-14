@@ -8,6 +8,7 @@ import { UpdateVehicleStatusUseCase } from "../application/use-cases/UpdateVehic
 import { GetVehiclesByDriverUseCase } from "../application/use-cases/GetVehiclesByDriverUseCase";
 import { SelectVehicleUseCase } from "../application/use-cases/SelectVehicleUseCase";
 import { VehicleStatus } from "../domain/enum/VehicleStatus";
+import { GetVehiculosPorVencerUseCase } from "../application/use-cases/GetVehiculosPorVencerUseCase";
 
 export class VehicleController {
 
@@ -17,7 +18,8 @@ export class VehicleController {
         private readonly getVehicleByIdUseCase: GetVehicleByIdUseCase,
         private readonly updateVehicleStatusUseCase: UpdateVehicleStatusUseCase,
         private readonly getVehiclesByDriverUseCase: GetVehiclesByDriverUseCase, 
-        private readonly selectVehicleUseCase: SelectVehicleUseCase
+        private readonly selectVehicleUseCase: SelectVehicleUseCase,
+        private readonly getVehiculosPorVencerUseCase: GetVehiculosPorVencerUseCase
     ) {}
 
     async create(body: CreateVehicleDTO) {
@@ -43,4 +45,8 @@ export class VehicleController {
     async select(vehicleId: number, driverId: number){
         return this.selectVehicleUseCase.execute(vehicleId, driverId); 
     }
+
+    async getVencimientos() {
+    return this.getVehiculosPorVencerUseCase.execute();
+}
 }

@@ -34,6 +34,7 @@ import { MarcaRepository } from "../infrastructure/prisma/marca.repository";
 import { GetAllMarcasUseCase } from "../application/use-cases/GetAllMarcasUseCase";
 import { MarcaController } from "./marca.controller";
 import { CreateMarcaUseCase } from "../application/use-cases/CreateMarcaUseCase";
+import { GetVehiculosPorVencerUseCase } from "../application/use-cases/GetVehiculosPorVencerUseCase";
 
 
 /* ============================================================
@@ -64,6 +65,7 @@ const getVehicleByIdUseCase         = new GetVehicleByIdUseCase(vehicleRepositor
 const updateVehicleStatusUseCase    = new UpdateVehicleStatusUseCase(vehicleRepository);
 const getVehiclesByDriverUseCase    = new GetVehiclesByDriverUseCase(vehicleRepository);
 const selectVehiclesUseCase         = new SelectVehicleUseCase(vehicleRepository, revisionRepository); 
+const getVehiculosPorVencerUseCase = new GetVehiculosPorVencerUseCase(vehicleRepository, revisionRepository);
 
 
 //Use cases de Revision 
@@ -95,7 +97,8 @@ export const vehicleController = new VehicleController(
         getVehicleByIdUseCase, 
         updateVehicleStatusUseCase,
         getVehiclesByDriverUseCase, 
-        selectVehiclesUseCase
+        selectVehiclesUseCase,
+        getVehiculosPorVencerUseCase, 
     );
 
 export const revisionController = new RevisionController(

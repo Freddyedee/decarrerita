@@ -35,4 +35,12 @@ export interface IRevisionRepository {
      * actualmente apto o no.
      */
     findLatestByVehicleId(vehicleId: number): Promise<RevisionVehicular | null>;
+
+    /**
+     * Trae, para cada vehículo dado, su revisión más reciente.
+     * Se usa para construir el reporte de vencimientos: en vez de
+     * consultar vehículo por vehículo (N llamadas), se resuelve
+     * en una sola consulta por lote.
+     */
+    findLatestByVehicleIds(vehicleIds: number[]): Promise<RevisionVehicular[]>;
 }

@@ -49,4 +49,7 @@ export interface IVehicleRepository {
    * un vehículo seleccionado y disponible ahora mismo.
    */
   findAllActive(): Promise<Vehicle[]>;
+
+
+  
 }

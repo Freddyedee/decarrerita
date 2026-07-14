@@ -54,4 +54,28 @@ export class RevisionRepository implements IRevisionRepository {
 
         return revisionMapper.toDomain(revision);
     }
+
+    // infrastructure/prisma/revision.repository.ts — agregar
+
+    async findLatestByVehicleIds(vehicleIds: number[]): Promise<RevisionVehicular[]> {
+
+        // Prisma no tiene "traer el más reciente por grupo" nativo
+        // en una sola query simple, así que se resuelve trayendo
+        // todas las revisiones de esos vehículos ordenadas, y
+        // quedándonos con la primera de cada uno en memoria.
+        const revisiones = await prisma.revision_vehicular.findMany({
+            where: { id_vehiculo: { in: vehicleIds } },
+            orderBy: { fecha_revision: "desc" }
+        });
+
+        const masRecientePorVehiculo = new Map<number, typeof revisiones[number]>();
+
+        for (const r of revisiones) {
+            if (!masRecientePorVehiculo.has(r.id_vehiculo)) {
+                masRecientePorVehiculo.set(r.id_vehiculo, r);
+            }
+        }
+
+        return Array.from(masRecientePorVehiculo.values()).map(r => revisionMapper.toDomain(r));
+    }
 }
