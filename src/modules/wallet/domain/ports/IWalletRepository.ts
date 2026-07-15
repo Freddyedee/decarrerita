@@ -23,4 +23,11 @@ export interface IWalletRepository {
         tx?: Prisma.TransactionClient
 
     ): Promise <Wallet>; 
+
+    sumOfMovementsByType( usuarioId: number, tipoMovimiento: string, from: Date, until: Date ): Promise <number>; 
+
+
+
+    calcularCambioNetoSaldo(usuarioId: number, desde: Date, hasta: Date): Promise<number>; 
+
 }

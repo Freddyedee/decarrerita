@@ -45,4 +45,6 @@ export interface IWalletService {
      * negativo por una penalización pendiente de regularizar.
      */
     puedeOperar(usuarioId: number): Promise<boolean>;
+
+
 }

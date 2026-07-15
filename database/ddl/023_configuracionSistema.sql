@@ -11,7 +11,7 @@ SELECT * FROM movimiento_wallet;
 
 select  * from wallet 
 
-select * from tarifa ; 
+select * from usuario ; 
 
 UPDATE wallet SET saldo_disponible = 150 WHERE id_usuario = 5;
 

@@ -101,10 +101,6 @@ export class WalletService implements IWalletService {
         const wallet = await this.walletRepository.findByUsuarioId(usuarioId, tx); 
         if(!wallet) throw new Error(`Wallet not found for usuario ${usuarioId}`); 
 
-        console.log("=== APLICAR PENALIZACION ===");
-        console.log("usuarioId:", usuarioId);
-        console.log("monto a penalizar:", monto);
-        console.log("saldo ANTES de penalizar:", wallet.saldoDisponible);
 
         const saldoAnterior = wallet.saldoDisponible; 
         wallet.debitarPenalizacion(monto); 
@@ -115,7 +111,6 @@ export class WalletService implements IWalletService {
             tx
         ); 
 
-        console.log("=== FIN APLICAR PENALIZACION ===");
 
     }
 
@@ -127,7 +122,7 @@ export class WalletService implements IWalletService {
      */
 
     async reembolsarConPenalizacion(
-        clienteId: number, montoTotal: number, penalizacion: number, trasladoId: number, tx: Prisma.TransactionClient
+        clienteId: number, montoTotal: number, penalizacion: number, trasladoId: number, tx?: Prisma.TransactionClient
     ): Promise<void> {
 
         const montoReembolso = montoTotal - penalizacion;
@@ -146,7 +141,8 @@ export class WalletService implements IWalletService {
         await this.walletRepository.updateWithMovement(
             walletEmpresa, "REVERSO", montoReembolso,
             saldoAnteriorEmpresa, trasladoId, 
-            `Reembolso parcial traslado #${trasladoId} (penalización retenida: ${penalizacion})`
+            `Reembolso parcial traslado #${trasladoId} (penalización retenida: ${penalizacion})`,
+            tx
         );
 
         const saldoAnteriorCliente = walletCliente.saldoDisponible; 
@@ -155,7 +151,8 @@ export class WalletService implements IWalletService {
         await this.walletRepository.updateWithMovement(
             walletCliente, "REVERSO", montoReembolso,
             saldoAnteriorCliente, trasladoId,
-            `Reembolso por cancelación de traslado #${trasladoId}`
+            `Reembolso por cancelación de traslado #${trasladoId}`,
+            tx
         );
     }
 
@@ -175,4 +172,7 @@ export class WalletService implements IWalletService {
 
         return wallet.puedeIniciarNuevaOperacion();
     }
+
+
+    
 }
