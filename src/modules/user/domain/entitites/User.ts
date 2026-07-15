@@ -58,12 +58,25 @@ export class User {
         return this.passwordHash;
     }
 
+
+    isActive(){
+        return this.status == UserStatus.ACTIVO;
+    }
+
     getStatus() {
         return this.status;
     }
 
-    getUserId(): number | null {
-    return this.userid;
+    getUserId(): number {
+
+        if (this.userid === null) {
+
+            throw new Error("User has not been persisted.");
+
+        }
+
+        return this.userid;
+
     }
 
     getCreatedAt(): Date {

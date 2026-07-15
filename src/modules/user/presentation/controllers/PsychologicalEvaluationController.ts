@@ -29,5 +29,4 @@ export class PsychologicalEvaluationController {
         return await this.getPsychologicalEvaluationsUseCase.execute(driverUserId);
 
     }
-
 }

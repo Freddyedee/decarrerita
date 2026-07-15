@@ -8,9 +8,13 @@ import { Email, PasswordHash, PersonName, Phone } from "../../domain/value-objec
 import { UserRole } from "../../domain/enums/UserRole";
 import { UserStatus } from "../../domain/enums/UserStatus";
 import { prisma } from "@/shared/lib/prisma";
-import { usuario as PrismaUser } from "@prisma/client";
+import { PrismaClient, usuario as PrismaUser } from "@prisma/client";
 
 export class PrismaUserRepository implements IUserRepository {
+
+        constructor(
+            private readonly prisma: PrismaClient
+        ) {}
 
     async findById(id: number): Promise<User | null> {
 
