@@ -66,31 +66,6 @@ export class WalletRepository implements IWalletRepository {
         return walletMapper.toDomain(updated);
     }
 
-
-    async sumOfMovementsByType(usuarioId: number, typeMovement: string, from: Date, until: Date): Promise<number> {
-        
-        const wallet = await prisma.wallet.findUnique({where: { id_usuario: usuarioId}});
-        if(!wallet){
-            return 0; 
-        }
-
-            const resultado = await prisma.movimiento_wallet.aggregate({
-                
-                where : { 
-                    id_wallet : wallet.id_wallet,
-                    tipo_movimiento : typeMovement,
-                    date_movement: { gte: from, lte: until}
-
-                }, 
-
-                _sum: { monto : true}
-            }); 
-
-            return Number(resultado._sum.monto ?? 0); 
-        
-    }
-
-
     /**
      * ============================================================
      * ÚNICO LUGAR DEL PROYECTO CON SQL CRUDO ($queryRaw)

@@ -1,3 +1,4 @@
+
 // src/app/(admin)/layout.tsx
 
 import { useCurrentRole } from "@/shared/auth/userCurrentRole";
@@ -6,56 +7,54 @@ import { redirect } from "next/navigation";
 /**
  * Layout compartido por todas las pantallas de administrador.
  *
- * TODO FUTURO: cuando Auth esté listo, este componente debe
- * volverse un Server Component async que lea la sesión real
- * (hoy usa el mock de useCurrentRole). La validación de abajo
- * (`if (rol !== "ADMIN")`) ya queda correcta tal cual — solo
- * cambia de dónde viene `rol`.
+ * GUARD DE ROL: se hace aquí, no en middleware.ts. Los grupos de rutas
+ * entre paréntesis -- (admin), (cliente), etc. -- no agregan segmento
+ * a la URL en Next.js (p.ej. esta página vive en "/tarifas", no en
+ * "/admin/tarifas"), así que el middleware no puede filtrar por
+ * prefijo de ruta hoy. Si en el futuro se decide mover a carpetas
+ * reales "admin/", "cliente/" (sin paréntesis), se puede sumar esa
+ * capa extra en middleware.ts sin quitar este guard.
+ *
+ *
+ * ALCANCE DE ESTE MENÚ: solo las secciones que le corresponden a
+ * ADMIN (dueño del sistema: tarifas, catálogos, usuarios, config).
+ * Traslados y Reportes son responsabilidad de STAFF, no de ADMIN --
+ * ver esa distinción en el layout de (staff) cuando se construya.
  */
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
 
-    const { rol } = useCurrentRole();
+    const sesion = await useCurrentRole();
 
-    if (rol !== "ADMIN") {
-        redirect("/"); // TODO futuro: redirigir a /login cuando exista esa pantalla
+    if (!sesion || sesion.rol !== "ADMIN") {
+        redirect("/login");
     }
 
     return (
-        <div className="flex min-h-screen bg-[#F4F5F7] text-[#12131A]">
+        <div className="flex min-h-screen bg-slate-50 text-slate-900">
 
-            <aside className="w-60 shrink-0 bg-[#12131A] text-white flex flex-col">
-                <div className="px-6 py-8 border-b border-white/10">
-                    <p className="font-display text-lg tracking-tight">Decarrerita</p>
-                    <p className="text-xs text-white/50 mt-1 font-mono">panel administrativo</p>
+            {/* ============================================================
+             * SIDEBAR
+             * Mismo lenguaje visual que las cards de Tarifas/Vencimientos:
+             * blanco, borde slate-200, acentos teal. Nada de tema oscuro
+             * para que el panel se sienta como una sola aplicación.
+             * ============================================================ */}
+            <aside className="w-60 shrink-0 bg-white border-r border-slate-200 flex flex-col">
+                <div className="px-6 py-8 border-b border-slate-200">
+                    <p className="text-lg font-bold tracking-tight text-slate-900">Decarrerita</p>
+                    <p className="text-xs text-slate-400 mt-1 font-mono">panel administrativo</p>
                 </div>
 
                 <nav className="flex flex-col gap-1 px-3 py-4 text-sm">
-                    <a href="/dashboard" className="px-3 py-2 rounded hover:bg-white/10 transition-colors">
-                        Resumen
-                    </a>
-                    <a href="/tarifas" className="px-3 py-2 rounded hover:bg-white/10 transition-colors">
-                        Tarifas
-                    </a>
-                    <a href="/vehiculos" className="px-3 py-2 rounded hover:bg-white/10 transition-colors">
-                        Vehículos y revisiones
-                    </a>
-                    <a href="/marcas" className="px-3 py-2 rounded hover:bg-white/10 transition-colors">
-                        Marcas
-                    </a>
-                    <a href="/traslados" className="px-3 py-2 rounded hover:bg-white/10 transition-colors">
-                        Traslados
-                    </a>
-                    <a href="/reportes" className="px-3 py-2 rounded hover:bg-white/10 transition-colors">
-                        Reportes
-                    </a>
-
-                    <a href="/vehiculos/por-chofer" className="px-3 py-2 rounded hover:bg-white/10 transition-colors">
-                        Vehículos por chofer
-                    </a>
-
-                    <a href="/vehiculos/vencimientos" className="px-3 py-2 rounded hover:bg-white/10 transition-colors">
-                        Vencimientos
-                    </a>
+                    <NavLink href="/tarifas" label="Tarifas" />
+                    <NavLink href="/vehiculos" label="Vehículos" />
+                    <NavLink href="/vehiculos/por-chofer" label="Vehículos por chofer" />
+                    <NavLink href="/vehiculos/vencimientos" label="Vencimientos" />
+                    <NavLink href="/marcas" label="Marcas" />
+                    <NavLink href="/usuarios" label="Usuarios" />
+                    <NavLink href="/configuracion" label="Configuración" />
+                    <NavLink href="/evaluaciones" label="Evaluaciones psicológicas" />
+                    <NavLink href="/pagos" label="Pagos a choferes" />
+                    <NavLink href="/reportes" label="Reportes" />
                 </nav>
             </aside>
 
@@ -63,5 +62,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 {children}
             </main>
         </div>
+    );
+}
+
+/**
+ * Link de navegación del sidebar. Componente local -- si el nav de
+ * (cliente)/(chofer)/(staff) termina necesitando el mismo estilo,
+ * se mueve a un componente compartido en src/components/ui/nav-link.tsx.
+ */
+function NavLink({ href, label }: { href: string; label: string }) {
+    return (
+        <a
+            href={href}
+            className="px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+        >
+            {label}
+        </a>
     );
 }

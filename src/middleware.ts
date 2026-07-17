@@ -1,33 +1,19 @@
 // src/middleware.ts
-import { auth } from "@/shared/lib/auth";
+
+/**
+ * TEMPORAL: se desactiva la validación de next-auth mientras
+ * ese módulo no tenga datos de prueba reales (ver nota en
+ * useCurrentRole.ts). El guard de rol real sigue viviendo en
+ * cada layout de grupo — (admin), (cliente), (chofer) — que
+ * usa useCurrentRole(), así que las pantallas siguen protegidas
+ * a nivel de rol simulado, solo que sin sesión real de por medio.
+ */
 import { NextResponse } from "next/server";
 
-const publicRoutes = ["/", "/login", "/registro"];
-
-export default auth((req) => {
-
-    const { pathname } = req.nextUrl;
-
-    const isPublic = publicRoutes.includes(pathname);
-
-    if (!isPublic && !req.auth) {
-
-        const loginUrl = new URL("/login", req.nextUrl.origin);
-
-        return NextResponse.redirect(loginUrl);
-
-    }
-
+export default function middleware() {
     return NextResponse.next();
-
-});
+}
 
 export const config = {
-
-    matcher: [
-
-        "/((?!api|_next/static|_next/image|favicon.ico).*)"
-
-    ]
-
+    matcher: [],
 };

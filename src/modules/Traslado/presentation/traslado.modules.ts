@@ -64,3 +64,5 @@ export const trasladoController = new TrasladoController(
     iniciarTrasladoUseCase, completarTrasladoUseCase, cancelarTrasladoUseCase,
     trasladoRepository
 );
+
+export { trasladoRepository}; 
