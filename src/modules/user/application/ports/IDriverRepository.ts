@@ -8,4 +8,7 @@ export interface IDriverRepository {
 
     findPuntajeByChoferId(id: number): Promise<Driver>; 
 
+    updateStatus(driverUserId: number, status: string): Promise<void>;
+
+
 }

@@ -91,4 +91,11 @@ export class PrismaDriverRepository implements IDriverRepository {
         return this.toDomain(driver);
 
     }
+
+    async updateStatus(driverUserId: number, status: string): Promise<void> {
+        await this.prisma.chofer.update({
+            where: { id_usuario: driverUserId },
+            data: { estado_aprobacion: status }
+        });
+    }
 }

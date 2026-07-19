@@ -6,4 +6,6 @@ export interface IClientRepository {
 
     update(client: Client): Promise<Client>;
 
+    
+
 }

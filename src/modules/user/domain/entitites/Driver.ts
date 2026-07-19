@@ -7,7 +7,8 @@ export class Driver {
         private licenseNumber: DriverLicense,
         private status: ApprovalStatus,
         private averageRating: number,
-        private completedTrips: number | null
+        private completedTrips: number | null,
+        private bankId: number | null = null //
     ) {}
 
     changeStatus(
@@ -18,9 +19,7 @@ export class Driver {
     }
 
     
-    public updateLicense(
-        licenseNumber: DriverLicense,
-    ): void {
+    changeLicense(licenseNumber: DriverLicense): void {
         this.licenseNumber = licenseNumber;
     }
 
@@ -35,15 +34,12 @@ export class Driver {
         }
 
         this.averageRating = averageRating;
-
         this.completedTrips = completedTrips;
 
     }
 
-    changeLicense(licenseNumber: DriverLicense): void {
-
-        this.licenseNumber = licenseNumber;
-
+    assignBank(bankId: number | null): void {
+        this.bankId = bankId;
     }
 
     isApproved(): boolean {
@@ -68,5 +64,9 @@ export class Driver {
 
     getLicenseNumber(): DriverLicense {
         return this.licenseNumber;
+    }
+
+    getBankId(): number | null {
+        return this.bankId;
     }
 }

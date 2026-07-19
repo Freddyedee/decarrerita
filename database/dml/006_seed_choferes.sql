@@ -1,10 +1,7 @@
--- SEED DE CHOFERES
--- Objetivo: Crear usuarios con rol 'Chofer', su perfil especializado, 
--- su wallet y su primer vehículo asignado. 
-
-BEGIN;
-
-WITH nuevo_usuario AS (
+-- ==========================================
+-- 3. SEED DE CHOFERES
+-- ==========================================
+WITH nuevo_usuario_chofer AS (
     INSERT INTO usuario (id_rol, nombre, apellido, email, telefono, password_hash, estado)
     VALUES (
         (SELECT id_rol FROM rol WHERE nombre = 'Chofer'), 
@@ -13,11 +10,12 @@ WITH nuevo_usuario AS (
     RETURNING id_usuario
 ),
 nuevo_chofer AS (
+    -- NOTA: id_banco y numero_cuenta quedarán en NULL automáticamente
     INSERT INTO chofer (id_usuario, licencia, estado_aprobacion)
-    SELECT id_usuario, 'LIC-5588', 'aprobado' FROM nuevo_usuario
+    SELECT id_usuario, 'LIC-5588', 'aprobado' FROM nuevo_usuario_chofer
     RETURNING id_usuario
 )
--- Eliminamos el bloque 'nueva_wallet' porque el trigger lo hace solo
+-- Asignación del vehículo al Chofer
 INSERT INTO vehiculo (id_marca, id_chofer, placa, modelo, color, annio, capacidad_pasajeros, estado)
 SELECT 
     (SELECT id_marca FROM marca WHERE nombre = 'Ford'),
@@ -32,8 +30,4 @@ FROM nuevo_chofer;
 
 COMMIT;
 
-select * from chofer;
-select * from vehiculo
 
--- Esto borra todos los datos y resetea todos los contadores de las tablas a 1
-TRUNCATE TABLE vehiculo, wallet, chofer, usuario RESTART IDENTITY CASCADE;

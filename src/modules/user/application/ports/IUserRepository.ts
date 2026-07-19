@@ -10,4 +10,5 @@ export interface IUserRepository {
 
     update(user: User): Promise<User>;
 
+
 }

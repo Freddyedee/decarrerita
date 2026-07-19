@@ -1,14 +1,12 @@
-import { PsychologicalEvaluationResult } from "../../domain/enums/PsychologicalEvaluationResult";
-
 export interface RegisterPsychologicalEvaluationRequest {
 
     driverUserId: number;
 
-    result: PsychologicalEvaluationResult;
+    //result: PsychologicalEvaluationResult;
 
     observations: string;
 
-    expirationDate: Date;
+    //expirationDate: Date;
 
     score: number;
 

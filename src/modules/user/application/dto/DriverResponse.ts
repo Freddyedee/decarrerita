@@ -12,4 +12,6 @@ export interface DriverResponse {
 
     completedTrips: number | null;
 
+    bankId: number | null; //
+
 }

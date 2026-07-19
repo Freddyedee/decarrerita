@@ -39,6 +39,8 @@ model banco {
   activo           Boolean            @default(true)
   recarga          recarga[]
   solicitud_retiro solicitud_retiro[]
+
+  chofer chofer[]
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -63,6 +65,14 @@ model chofer {
   estado_aprobacion      String                   @db.VarChar(20)
   puntaje_promedio       Decimal?                 @default(5.00) @db.Decimal(3, 2)
   viajes_completados     Int?                     @default(0)
+
+  // ------
+  id_banco               Int?
+  numero_cuenta          String?                  @db.VarChar(20)
+  banco                  banco?                   @relation(fields: [id_banco], references: [id_banco], onDelete: NoAction, onUpdate: NoAction, map: "fk_chofer_banco")
+  // ----------------------------------------------------------
+
+
   asignacion_chofer      asignacion_chofer[]
   calificacion           calificacion[]
   usuario                usuario                  @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
