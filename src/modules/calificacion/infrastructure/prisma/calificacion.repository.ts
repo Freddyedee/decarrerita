@@ -5,8 +5,9 @@ import { calificacionMapper } from "./calificacion.mapper";
 
 export class CalificacionRepository implements ICalificacionRepository { 
 
-    async create (calificacion: Calificacion): Promise<Calificacion> { 
-        const { id_calificacion, ...data} = calificacionMapper.toPersistence(calificacion); 
+    async create (calificacion: Calificacion): Promise<Calificacion> {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars 
+        const { id_calificacion: _id_calificacion, ...data} = calificacionMapper.toPersistence(calificacion); 
         const created = await prisma.calificacion.create({data}); 
         return calificacionMapper.toDomain(created); 
     }

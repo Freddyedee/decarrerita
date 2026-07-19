@@ -1,4 +1,4 @@
-import { useCurrentRole } from "@/shared/auth/userCurrentRole";
+import { getCurrentRole } from "@/shared/auth/userCurrentRole";
 import { redirect } from "next/navigation";
 import { AdminSidebar } from "@/components/dashboard/AdminSidebar";
 
@@ -7,7 +7,7 @@ import { AdminSidebar } from "@/components/dashboard/AdminSidebar";
  * GUARD DE ROL: Verifica permisos en el servidor antes de renderizar.
  */
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-    const sesion = await useCurrentRole();
+    const sesion = await getCurrentRole();
 
     // Nota de negocio: Verifica si tu esquema de base de datos usa "ADMIN" o "PERSONAL_ADMINISTRATIVO"
     // para cubrir a quienes gestionan pagos y reportes.

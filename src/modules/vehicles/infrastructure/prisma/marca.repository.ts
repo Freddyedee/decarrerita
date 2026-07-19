@@ -7,7 +7,8 @@ export class MarcaRepository implements IMarcaRepository {
 
     async create(marca:Marca): Promise <Marca> { 
 
-        const {id_marca, ...data} = marcaMapper.toPersistence(marca); 
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const {id_marca: _id_marca, ...data} = marcaMapper.toPersistence(marca); 
         
         const created = await prisma.marca.create({data}); 
 

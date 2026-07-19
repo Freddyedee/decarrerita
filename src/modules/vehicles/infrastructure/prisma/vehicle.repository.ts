@@ -10,8 +10,8 @@ export class VehicleRepository implements IVehicleRepository {
      * Crea un nuevo vehículo.
      */
     async create(vehicle: Vehicle): Promise<Vehicle> {
-
-        const { id_vehiculo, ...data } = vehicleMapper.toPersistence(vehicle);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id_vehiculo: _id_vehiculo, ...data } = vehicleMapper.toPersistence(vehicle);
 
         const created = await prisma.vehiculo.create({
             data
@@ -88,8 +88,8 @@ export class VehicleRepository implements IVehicleRepository {
      * y ese cambio debe reflejarse en la base de datos.
      */
     async update(vehicle: Vehicle): Promise<Vehicle> {
-
-        const { id_vehiculo, ...data } = vehicleMapper.toPersistence(vehicle);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id_vehiculo: _id_vehiculo, ...data } = vehicleMapper.toPersistence(vehicle);
 
         const updated = await prisma.vehiculo.update({
             where: { id_vehiculo: vehicle.id },

@@ -44,7 +44,9 @@ export class UpdateDriverMetricsUseCase {
 
             averageRating: updatedDriver.getAverageRating(),
 
-            completedTrips: updatedDriver.getCompletedTrips()
+            completedTrips: updatedDriver.getCompletedTrips(),
+
+            bankId: updatedDriver.getBankId(), 
 
         };
 

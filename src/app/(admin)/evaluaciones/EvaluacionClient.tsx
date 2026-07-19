@@ -42,10 +42,10 @@ export function EvaluacionClient({ choferes }: { choferes: ChoferData[] }) {
   };
 
   // Función para cerrar el modal limpiando los errores
-  const cerrarModal = () => {
+  /*const cerrarModal = () => {
     setChoferSeleccionado(null);
     setErrorMensaje(null);
-  };
+  };**/
 
   return (
     <div className="space-y-6">

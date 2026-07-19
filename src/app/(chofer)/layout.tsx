@@ -1,13 +1,13 @@
 // src/app/(chofer)/layout.tsx
 
-import { useCurrentRole } from "@/shared/auth/userCurrentRole";
+import { getCurrentRole } from "@/shared/auth/userCurrentRole";
 import { redirect } from "next/navigation";
 
-export default function ChoferLayout({ children }: { children: React.ReactNode }) {
+export default async function ChoferLayout({ children }: { children: React.ReactNode }) {
 
-    const { rol } = useCurrentRole();
+    const sesion = await getCurrentRole();
 
-    if (rol !== "CHOFER") {
+    if (!sesion || sessionStorage.rol !== "CHOFER") {
         redirect("/login");
     }
 

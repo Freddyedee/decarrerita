@@ -26,8 +26,10 @@ export class RegisterPsychologicalEvaluationUseCase {
             throw new Error("La calificación debe estar entre 0 y 100.");
         }
 
-        const resultStr = request.score >= 73 ? "aprobado" : "rechazado";
-        const resultEnum = resultStr as PsychologicalEvaluationResult;
+        const resultStr = request.score >= 73 
+        ? PsychologicalEvaluationResult.APPROVED 
+        : PsychologicalEvaluationResult.REJECTED;
+        //const resultEnum = resultStr as PsychologicalEvaluationResult;
 
         const expirationDate = new Date();
         expirationDate.setFullYear(expirationDate.getFullYear() + 1);
@@ -37,7 +39,6 @@ export class RegisterPsychologicalEvaluationUseCase {
             null,
             request.driverUserId,
             new Date(),
-            resultEnum,
             request.observations,
             expirationDate,
             request.score

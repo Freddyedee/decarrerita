@@ -25,8 +25,9 @@ export class GetDriverByIdUseCase {
 
             averageRating: driver.getAverageRating(),
 
-            completedTrips: driver.getCompletedTrips()
-
+            completedTrips: driver.getCompletedTrips(),
+            
+            bankId: driver.getBankId()
         };
 
     }

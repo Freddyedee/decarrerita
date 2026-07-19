@@ -9,7 +9,8 @@ export class RevisionRepository implements IRevisionRepository {
 
     async create(revision: RevisionVehicular): Promise<RevisionVehicular> {
 
-        const { id_revision, ...data } = revisionMapper.toPersistence(revision);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id_revision: _id_revision, ...data } = revisionMapper.toPersistence(revision);
 
         const created = await prisma.revision_vehicular.create({
             data

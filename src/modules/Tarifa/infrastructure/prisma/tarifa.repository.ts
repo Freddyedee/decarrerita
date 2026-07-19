@@ -8,7 +8,8 @@ import { tarifaMapper } from "../mappers/tarifa.mapper";
 export class TarifaRepository implements ITarifaRepository {
 
     async create(tarifa: Tarifa): Promise<Tarifa> {
-        const { id_tarifa, ...data } = tarifaMapper.toPersistence(tarifa);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id_tarifa: _id_tarifa, ...data } = tarifaMapper.toPersistence(tarifa);
         const created = await prisma.tarifa.create({ data });
         return tarifaMapper.toDomain(created);
     }

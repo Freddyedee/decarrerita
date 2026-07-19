@@ -1,4 +1,3 @@
-// src/shared/auth/useCurrentRole.ts
 
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
@@ -38,7 +37,7 @@ function mapIdRolToRol(idRol: number): Rol {
     }
 }
 
-export async function useCurrentRole(): Promise<SesionActual | null> {
+export async function getCurrentRole(): Promise<SesionActual | null> {
 
     const token = cookies().get("session_token")?.value;
     if (!token) return null;

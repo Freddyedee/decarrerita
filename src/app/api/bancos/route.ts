@@ -11,7 +11,7 @@ import { CreateBancoDTO } from '@/modules/banco/application/DTO/CreateBancoDto';
  * Endpoint GET: /api/bancos
  * Objetivo: Devuelve la lista de todos los bancos registrados.
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // 1. Instanciar dependencias (Composición)
     const bancoRepository = new BancoRepository();

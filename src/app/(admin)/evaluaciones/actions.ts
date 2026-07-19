@@ -15,6 +15,9 @@ export async function registrarEvaluacion(formData: FormData) {
     const calificacion = Number(formData.get("calificacion"));
     const observaciones = formData.get("observaciones") as string;
 
+    const fechaExpiracion = new Date();
+    fechaExpiracion.setFullYear(fechaExpiracion.getFullYear() + 1); 
+
     // 2. Instanciamos los repositorios concretos
     // (Si tienes configurado UserContainer.ts en tu capa compartida, puedes inyectarlo desde ahí)
     const driverRepo = new PrismaDriverRepository(prisma);
@@ -28,6 +31,7 @@ export async function registrarEvaluacion(formData: FormData) {
       driverUserId: idChofer,
       score: calificacion,
       observations: observaciones,
+      expirationDate: fechaExpiracion, 
     });
 
     // 5. Refrescamos la UI

@@ -1,13 +1,13 @@
 // src/app/(cliente)/layout.tsx
 
-import { useCurrentRole } from "@/shared/auth/userCurrentRole";
+import { getCurrentRole } from "@/shared/auth/userCurrentRole";
 import { redirect } from "next/navigation";
 
-export default function ClienteLayout({ children }: { children: React.ReactNode }) {
+export default async function ClienteLayout({ children }: { children: React.ReactNode }) {
 
-    const { rol } = useCurrentRole();
+    const sesion = await getCurrentRole();
 
-    if (rol !== "CLIENTE") {
+    if (!sesion || sesion.rol !== "CLIENTE") {
         redirect("/login");
     }
 

@@ -1,6 +1,6 @@
 // src/app/(cliente)/layout.tsx
 
-import { useCurrentRole } from "@/shared/auth/userCurrentRole";
+import { getCurrentRole } from "@/shared/auth/userCurrentRole";
 import { redirect } from "next/navigation";
 import Sidebar from "@/components/cliente/Sidebar";
 import ClientHeader from "@/components/cliente/Header";
@@ -21,7 +21,7 @@ export default async function ClienteLayout({
    * que es una función de servidor legítima.
    */
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const sesion = await useCurrentRole();
+  const sesion = await getCurrentRole();
 
   // Guard de seguridad con tu interfaz SesionActual { rol: Rol; usuarioId: number; }
   if (!sesion || sesion.rol !== "CLIENTE") {

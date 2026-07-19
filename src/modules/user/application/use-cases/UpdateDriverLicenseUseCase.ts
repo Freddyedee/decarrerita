@@ -44,7 +44,9 @@ export class UpdateDriverLicenseUseCase {
                 updatedDriver.getAverageRating(),
 
             completedTrips:
-                updatedDriver.getCompletedTrips()
+                updatedDriver.getCompletedTrips(),
+
+            bankId: updatedDriver.getBankId(), 
 
         };
 

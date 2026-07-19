@@ -9,7 +9,8 @@ import { trasladoMapper } from "./traslado.mapper";
 export class TrasladoRepository implements TrasladoRepository{
 
     async create(traslado: Traslado): Promise<Traslado> {
-        const { id_traslado, ...data } = trasladoMapper.toPersistence(traslado);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id_traslado: _id_traslado, ...data } = trasladoMapper.toPersistence(traslado);
         const created = await prisma.traslado.create({ data });
         return trasladoMapper.toDomain(created);
     }
@@ -22,7 +23,8 @@ export class TrasladoRepository implements TrasladoRepository{
     async update(traslado: Traslado, tx?: Prisma.TransactionClient): Promise<Traslado>{
 
         const client = tx ?? prisma; 
-        const { id_traslado, ...data} = trasladoMapper.toPersistence(traslado); 
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id_traslado: _id_traslado, ...data} = trasladoMapper.toPersistence(traslado); 
         const updated = await client.traslado.update ({
             where: { id_traslado: traslado.id},
             data

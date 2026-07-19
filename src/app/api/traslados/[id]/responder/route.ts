@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { trasladoController } from "@/modules/Traslado/presentation/traslado.modules";
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest) {
   try {
-    const raw = await req.json(); // { asignacionId, respuesta: "ACEPTADO" | "RECHAZADO" }
+    const raw = await request.json(); // { asignacionId, respuesta: "ACEPTADO" | "RECHAZADO" }
 
     const result = await trasladoController.responder({
       asignacionId: Number(raw.asignacionId),
