@@ -39,10 +39,18 @@ export async function POST(req: NextRequest) {
       .sign(secret);
 
       const landingPorRol: Record<number, string> = {
+<<<<<<< HEAD
       1: "/dashboard",     // ADMIN
       2: "/cliente",   // CLIENT
       3: "/chofer"    // DRIVER
       };
+=======
+      1: "/tarifas",     // ADMIN
+      4: "/reportes",    // STAFF (si sigue existiendo como rol separado)
+      2: "/cliente",   // CLIENT
+      3: "/traslados"    // DRIVER
+};
+>>>>>>> origin/modulo-cliente
 
     const response = NextResponse.json({
       message: "Login successful",

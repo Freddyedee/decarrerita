@@ -1,4 +1,3 @@
-
 import { IUserRepository } from "../../application/ports/IUserRepository";
 
 import { User } from "../../domain/entitites/User";
@@ -7,8 +6,7 @@ import { Email, PasswordHash, PersonName, Phone } from "../../domain/value-objec
 
 import { UserRole } from "../../domain/enums/UserRole";
 import { UserStatus } from "../../domain/enums/UserStatus";
-import { prisma } from "@/shared/lib/prisma";
-import { PrismaClient, usuario as PrismaUser } from "@prisma/client";
+import { PrismaClient, Prisma, usuario as PrismaUser } from "@prisma/client";
 
 export class PrismaUserRepository implements IUserRepository {
 
@@ -18,7 +16,7 @@ export class PrismaUserRepository implements IUserRepository {
 
     async findById(id: number): Promise<User | null> {
 
-        const user = await prisma.usuario.findUnique({
+        const user = await this.prisma.usuario.findUnique({
             where: {
                 id_usuario: id
             }
@@ -33,7 +31,7 @@ export class PrismaUserRepository implements IUserRepository {
 
     async findByEmail(email: Email): Promise<User | null> {
 
-        const user = await prisma.usuario.findUnique({
+        const user = await this.prisma.usuario.findUnique({
             where: {
                 email: email.getValue()
             }
@@ -46,9 +44,19 @@ export class PrismaUserRepository implements IUserRepository {
         return this.toDomain(user);
     }
 
-    async save(user: User): Promise<User> {
+    /**
+     * RN-026: recibe `tx` opcional para poder participar en la
+     * misma transacción que crea la fila `cliente`/`chofer`
+     * correspondiente (ver CreateUserUseCase). Si no se pasa
+     * `tx` (ej. cuando se usa fuera de ese flujo), cae de vuelta
+     * al cliente Prisma normal — mismo patrón que
+     * IWalletRepository/ITrasladoRepository.
+     */
+    async save(user: User, tx?: Prisma.TransactionClient): Promise<User> {
 
-        const created = await prisma.usuario.create({
+        const db = tx ?? this.prisma;
+
+        const created = await db.usuario.create({
 
             data: {
 
@@ -75,9 +83,11 @@ export class PrismaUserRepository implements IUserRepository {
     }
 
 
-    async update(user: User): Promise<User> {
+    async update(user: User, tx?: Prisma.TransactionClient): Promise<User> {
 
-        const updatedUser = await prisma.usuario.update({
+        const db = tx ?? this.prisma;
+
+        const updatedUser = await db.usuario.update({
 
             where: {
                 id_usuario: user.getUserId()!

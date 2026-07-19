@@ -1,6 +1,7 @@
 import { UpdateDriverMetricsUseCase } from "../../application/use-cases/UpdateDriverMetricsUseCase";
 import { UpdateDriverStatusUseCase } from "../../application/use-cases/UpdateDriverStatusUseCase";
 import { UpdateDriverLicenseUseCase } from "../../application/use-cases/UpdateDriverLicenseUseCase";
+import { GetDriverByIdUseCase } from "../../application/use-cases/GetDriverByIdUseCase";
 
 import { UpdateDriverMetricsRequest } from "../../application/dto/UpdateDriverMetricsRequest";
 import { UpdateDriverStatusRequest } from "../../application/dto/UpdateDriverStatusRequest";
@@ -16,9 +17,17 @@ export class DriverController {
 
         private readonly updateDriverStatusUseCase: UpdateDriverStatusUseCase,
 
-        private readonly updateDriverLicenseUseCase: UpdateDriverLicenseUseCase
+        private readonly updateDriverLicenseUseCase: UpdateDriverLicenseUseCase,
+
+        private readonly getDriverByIdUseCase: GetDriverByIdUseCase
 
     ) {}
+
+    async getById(userId: number): Promise<DriverResponse> {
+
+        return await this.getDriverByIdUseCase.execute(userId);
+
+    }
 
     async updateMetrics(
         request: UpdateDriverMetricsRequest

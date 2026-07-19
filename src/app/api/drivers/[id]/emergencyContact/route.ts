@@ -2,44 +2,33 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { UserContainer } from "@/shared/container/UserContainer";
 
-import { RegisterPsychologicalEvaluationRequest } from "@modules/user/application/dto/RegisterPsychologicalEvaluationRequest";
+import { RegisterEmergencyContactRequest } from "@modules/user/application/dto/RegisterEmergencyContactRequest";
 
 export async function POST(
     request: NextRequest,
-    {
-        params,
-    }: {
-        params: {
-            id: string;
-        };
-    }
+    { params }: { params: { id: string } }
 ) {
 
     try {
 
         const body = await request.json();
 
-        const dto: RegisterPsychologicalEvaluationRequest = {
+        const dto: RegisterEmergencyContactRequest = {
 
             driverUserId: Number(params.id),
 
-<<<<<<< HEAD
-            result: body.result,
+            contactName: body.contactName,
 
-=======
->>>>>>> origin/modulo-cliente
-            observations: body.observations,
+            relationship: body.relationship,
 
-            expirationDate: new Date(body.expirationDate),
-
-            score: body.score
+            phone: body.phone
 
         };
 
         const response =
-            await UserContainer.psychologicalEvaluationController.register(dto);
+            await UserContainer.emergencyContactController.register(dto);
 
-        return NextResponse.json(response);
+        return NextResponse.json(response, { status: 201 });
 
     } catch (error) {
 
@@ -50,9 +39,7 @@ export async function POST(
                         ? error.message
                         : "Unexpected error"
             },
-            {
-                status: 400
-            }
+            { status: 400 }
         );
 
     }
@@ -61,19 +48,13 @@ export async function POST(
 
 export async function GET(
     request: NextRequest,
-    {
-        params,
-    }: {
-        params: {
-            id: string;
-        };
-    }
+    { params }: { params: { id: string } }
 ) {
 
     try {
 
         const response =
-            await UserContainer.psychologicalEvaluationController.getByDriver(
+            await UserContainer.emergencyContactController.getByDriver(
                 Number(params.id)
             );
 
@@ -88,9 +69,7 @@ export async function GET(
                         ? error.message
                         : "Unexpected error"
             },
-            {
-                status: 400
-            }
+            { status: 400 }
         );
 
     }

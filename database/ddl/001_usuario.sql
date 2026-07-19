@@ -14,3 +14,8 @@ CREATE TABLE usuario (
     FOREIGN KEY (id_rol) 
     REFERENCES rol(id_rol)
 );
+
+
+SELECT *  FROM usuario;
+
+UPDATE usuario SET password_hash = '$2b$10$t5xoS6LN8XUUsicRuYcu7.cETwdztCsL9tBNcBOoGvPolVZdlDTLW' WHERE id_usuario = 1;

@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 
 import { Client } from "../../domain/entitites/Client";
 
@@ -28,9 +28,35 @@ export class PrismaClientRepository implements IClientRepository {
 
     }
 
-    async update(client: Client): Promise<Client> {
+    /**
+     * RN-026: no recibe `rating_promedio` — la columna tiene
+     * default 5.00 en la base de datos (ver DDL), así que todo
+     * cliente nuevo arranca con el mismo rating neutral que un
+     * chofer nuevo. Recibe `tx` para insertarse dentro de la
+     * misma transacción que crea el `usuario` (ver
+     * CreateUserUseCase).
+     */
+    async create(userId: number, tx?: Prisma.TransactionClient): Promise<Client> {
 
-        const updatedClient = await this.prisma.cliente.update({
+        const db = tx ?? this.prisma;
+
+        const created = await db.cliente.create({
+
+            data: {
+                id_usuario: userId
+            }
+
+        });
+
+        return this.toDomain(created);
+
+    }
+
+    async update(client: Client, tx?: Prisma.TransactionClient): Promise<Client> {
+
+        const db = tx ?? this.prisma;
+
+        const updatedClient = await db.cliente.update({
 
             where: {
                 id_usuario: client.getUserId()

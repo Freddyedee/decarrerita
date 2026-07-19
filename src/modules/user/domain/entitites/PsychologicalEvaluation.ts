@@ -2,6 +2,8 @@ import { PsychologicalEvaluationResult } from "../enums/PsychologicalEvaluationR
 
 export class PsychologicalEvaluation {
 
+    private result: PsychologicalEvaluationResult;
+
     constructor(
 
         private readonly evaluationId: number | null,
@@ -9,8 +11,6 @@ export class PsychologicalEvaluation {
         private readonly driverUserId: number,
 
         private readonly evaluationDate: Date,
-
-        private result: PsychologicalEvaluationResult,
 
         private observations: string,
 
@@ -25,6 +25,8 @@ export class PsychologicalEvaluation {
         this.validateObservations(observations);
 
         this.validateExpirationDate(expirationDate);
+
+        this.result = this.calculateResult(score);
 
     }
 
@@ -56,6 +58,13 @@ export class PsychologicalEvaluation {
 
     }
 
+     private calculateResult(score: number): PsychologicalEvaluationResult {
+
+        return score >= 73
+            ? PsychologicalEvaluationResult.APPROVED
+            : PsychologicalEvaluationResult.REJECTED;
+
+    }
     //==========================
     // Getters
     //==========================

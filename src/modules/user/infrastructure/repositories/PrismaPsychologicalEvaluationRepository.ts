@@ -4,7 +4,6 @@ import {
 } from "@prisma/client";
 
 import { PsychologicalEvaluation } from "../../domain/entitites/PsychologicalEvaluation";
-import { PsychologicalEvaluationResult } from "../../domain/enums/PsychologicalEvaluationResult";
 
 import { IPsychologicalEvaluationRepository } from "../../application/ports/IPsychologicalEvaluationRepository";
 
@@ -70,6 +69,15 @@ export class PrismaPsychologicalEvaluationRepository
 
     }
 
+    /**
+     * Nótese que NO se pasa `evaluation.resultado` acá — el
+     * constructor de PsychologicalEvaluation vuelve a calcular
+     * el resultado a partir de `calificacion` (RN-029). La
+     * columna `resultado` en la base de datos queda como un
+     * espejo/histórico de ese cálculo (se sigue escribiendo en
+     * `save()`, vía `evaluation.getResult()`), pero nunca es la
+     * fuente de verdad al reconstruir la entidad.
+     */
     private toDomain(
         evaluation: evaluacion_psicologica
     ): PsychologicalEvaluation {
@@ -81,8 +89,6 @@ export class PrismaPsychologicalEvaluationRepository
             evaluation.id_chofer,
 
             evaluation.fecha_evaluacion,
-
-            evaluation.resultado as PsychologicalEvaluationResult,
 
             evaluation.observaciones,
 

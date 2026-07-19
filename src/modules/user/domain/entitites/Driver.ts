@@ -1,6 +1,14 @@
 import { ApprovalStatus } from "../enums/ApprovalStatus";
 import { DriverLicense } from "../value-objects/DriverLicense";
 
+/**
+ * ============================================================
+ * Entity: Driver
+ * ============================================================
+ * Especialización de User para el rol CHOFER. Vive en una
+ * relación 1:1 con `usuario`.
+ * ============================================================
+ */
 export class Driver {
     constructor(
         public readonly userId: number,
@@ -8,38 +16,34 @@ export class Driver {
         private status: ApprovalStatus,
         private averageRating: number,
         private completedTrips: number | null,
-        private bankId: number | null = null //
+        private bankId: number | null = null // <-- Nuestro aporte (Banco)
     ) {}
 
-    changeStatus(
-        status: ApprovalStatus
-    ): void {
-
+    changeStatus(status: ApprovalStatus): void {
         this.status = status;
     }
 
-    
-    changeLicense(licenseNumber: DriverLicense): void {
+    public updateLicense(licenseNumber: DriverLicense): void {
         this.licenseNumber = licenseNumber;
     }
 
-    changeMetrics(averageRating: number,completedTrips: number): void {
-
+    changeMetrics(averageRating: number, completedTrips: number): void {
         if (averageRating < 0 || averageRating > 5) {
             throw new Error("Invalid average rating.");
         }
-
         if (completedTrips < 0) {
             throw new Error("Completed trips cannot be negative.");
         }
-
         this.averageRating = averageRating;
         this.completedTrips = completedTrips;
-
     }
 
-    assignBank(bankId: number | null): void {
+    assignBank(bankId: number | null): void { // <-- Nuestro aporte
         this.bankId = bankId;
+    }
+
+    changeLicense(licenseNumber: DriverLicense): void {
+        this.licenseNumber = licenseNumber;
     }
 
     isApproved(): boolean {
@@ -66,7 +70,7 @@ export class Driver {
         return this.licenseNumber;
     }
 
-    getBankId(): number | null {
+    getBankId(): number | null { // <-- Nuestro aporte
         return this.bankId;
     }
 }
