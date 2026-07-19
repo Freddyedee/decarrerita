@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-<<<<<<< HEAD
-import { userController } from "@modules/user/presentation/router/UserRouter";
-=======
 import { UserContainer } from "@/shared/container/UserContainer";
->>>>>>> origin/modulo-cliente
 
 export async function POST(request: NextRequest) {
 
@@ -12,12 +7,8 @@ export async function POST(request: NextRequest) {
 
         const body = await request.json();
 
-        const response =
-<<<<<<< HEAD
-            await userController.createUser(body);
-=======
-            await UserContainer.userController.createUser(body);
->>>>>>> origin/modulo-cliente
+        const response = await UserContainer.userController.createUser(body);
+
 
         return NextResponse.json(response, {
             status: 201

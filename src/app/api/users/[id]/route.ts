@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-<<<<<<< HEAD
-import { userController } from "@modules/user/presentation/router/UserRouter";
-=======
 import { UserContainer } from "@/shared/container/UserContainer";
->>>>>>> origin/modulo-cliente
 
 interface RouteParams {
     params: {
@@ -22,11 +17,7 @@ export async function GET(
         const id = Number(params.id);
 
         const response =
-<<<<<<< HEAD
-            await userController.getUserById(id);
-=======
             await UserContainer.userController.getUserById(id);
->>>>>>> origin/modulo-cliente
 
         return NextResponse.json(response);
 

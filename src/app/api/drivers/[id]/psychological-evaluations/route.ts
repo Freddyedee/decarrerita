@@ -23,11 +23,6 @@ export async function POST(
 
             driverUserId: Number(params.id),
 
-<<<<<<< HEAD
-            result: body.result,
-
-=======
->>>>>>> origin/modulo-cliente
             observations: body.observations,
 
             expirationDate: new Date(body.expirationDate),
