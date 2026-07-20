@@ -75,7 +75,6 @@ export class PrismaDriverRepository implements IDriverRepository {
             driver.estado_aprobacion as ApprovalStatus,
             Number(driver.puntaje_promedio ?? 5),
             driver.viajes_completados,
-            driver.id_banco // <-- NUESTRO APORTE: Hidrata la entidad con el Banco
         );
     }
 

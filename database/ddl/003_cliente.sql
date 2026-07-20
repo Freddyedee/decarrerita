@@ -5,3 +5,5 @@ CREATE TABLE cliente (
     rating_promedio DECIMAL(3,2) DEFAULT 5.00 
 	CHECK (rating_promedio BETWEEN 0 AND 5)
 );
+
+SELECT * FROM cliente;

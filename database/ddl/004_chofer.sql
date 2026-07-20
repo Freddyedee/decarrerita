@@ -13,3 +13,5 @@ CREATE TABLE chofer (
     puntaje_promedio DECIMAL(3,2) DEFAULT 5.00 CHECK (puntaje_promedio BETWEEN 0 AND 5),
     viajes_completados INTEGER DEFAULT 0
 );
+
+SELECT * FROM chofer;
