@@ -31,3 +31,28 @@ export async function POST(request: NextRequest) {
     }
 
 }
+
+export async function GET() {
+    try {
+        // ¡Ahora sí llamamos al caso de uso real que va a la base de datos!
+        const response = await UserContainer.userController.getAllUsers();
+
+        return NextResponse.json(response, { 
+            status: 200 
+        });
+    } catch (error) {
+        console.error("ERROR FATAL EN GET /api/users:", error);
+
+        return NextResponse.json(
+            {
+                message:
+                    error instanceof Error
+                        ? error.message
+                        : "Internal server error"
+            },
+            {
+                status: 500
+            }
+        );
+    }
+}

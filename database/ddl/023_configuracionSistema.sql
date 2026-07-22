@@ -11,6 +11,8 @@ SELECT * FROM movimiento_wallet;
 
 select  * from wallet 
 
+
+
 select * from rol;
 
 select * from chofer ; 
@@ -24,6 +26,7 @@ UPDATE usuario SET email = LOWER(email); apellido;
 
 select * from chofer; 
 
+
 select * from revision_vehicular;
 
 select * from vehiculo
@@ -36,11 +39,11 @@ select * from banco;
 
 INSERT INTO usuario (id_rol, nombre, apellido, email, telefono, password_hash, estado)
 VALUES (
-    (SELECT id_rol FROM rol WHERE nombre = 'Administrador'), 
-    'Admin', 
+    (SELECT id_rol FROM rol WHERE nombre = 'Chofer'), 
+    'Chofer', 
     'Principal', 
-    'admin@decarrerita.com', 
-    '0000000000', 
+    'chofer@decarrerita.com', 
+    '04148761470', 
     '$2b$10$GkTtWsRjKgrpGngkigI.eepWcHCfkzDAUUzraijFGb.XE3.3b6lA2', -- Ej: '$2b$10$w8T.N0b3...'
     'activo'
 );

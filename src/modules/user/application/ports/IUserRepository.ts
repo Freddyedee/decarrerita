@@ -9,6 +9,8 @@ export interface IUserRepository {
 
     findByEmail(email: Email): Promise<User | null>;
 
+    findAll(): Promise<User[]>;
+    
     /**
      * RN-026: `save` SOLO inserta la fila base en `usuario`.
      * Nunca crea `cliente` ni `chofer` — eso es responsabilidad
@@ -22,5 +24,7 @@ export interface IUserRepository {
     save(user: User, tx?: Prisma.TransactionClient): Promise<User>;
 
     update(user: User, tx?: Prisma.TransactionClient): Promise<User>;
+
+   
 
 }

@@ -23,6 +23,7 @@ import { RegisterPsychologicalEvaluationUseCase } from "../../modules/user/appli
 import { GetPsychologicalEvaluationsUseCase } from "../../modules/user/application/use-cases/GetPsychologicalEvaluationsUseCase";
 import { RegisterEmergencyContactUseCase } from "../../modules/user/application/use-cases/RegisterEmergencyContactUseCase";
 import { GetEmergencyContactsUseCase } from "../../modules/user/application/use-cases/GetEmergencyContactsUseCase";
+import { GetAllUsersUseCase } from "@/modules/user/application/use-cases/GetAllUsersUseCase";
 
 import { UserController } from "../../modules/user/presentation/controllers/UserController";
 import { ClientController } from "../../modules/user/presentation/controllers/ClientController";
@@ -53,26 +54,28 @@ export class UserContainer {
     public static readonly driverRepository = new PrismaDriverRepository(prisma);
     public static readonly psychologicalEvaluationRepository = new PrismaPsychologicalEvaluationRepository(prisma);
     public static readonly emergencyContactRepository = new PrismaEmergencyContactRepository(prisma);
+
     
     // NUESTRO APORTE: Inicializamos el repositorio de Bancos
-    public static readonly bancoRepository = new BancoRepository
-
+    public static readonly bancoRepository = new BancoRepository(prisma);
     // ============================
     // User Use Cases
     // ============================
 
-    // NUESTRO APORTE: Inyectamos el bancoRepository al final
+   
     public static readonly createUserUseCase = new CreateUserUseCase(
         this.userRepository,
         this.clientRepository,
         this.driverRepository,
         this.transactionManager,
-        this.bancoRepository // <-- Inyección del Banco
+        this.bancoRepository, 
     );
 
     public static readonly getUserByIdUseCase = new GetUserByIdUseCase(this.userRepository);
     public static readonly updateUserProfileUseCase = new UpdateUserProfileUseCase(this.userRepository);
     public static readonly updateUserStatusUseCase = new UpdateUserStatusUseCase(this.userRepository);
+
+    public static readonly  getAllUsersUseCase = new GetAllUsersUseCase(this.userRepository);
 
     // ============================
     // Client Use Cases
@@ -124,7 +127,9 @@ export class UserContainer {
         this.createUserUseCase,
         this.getUserByIdUseCase,
         this.updateUserProfileUseCase,
-        this.updateUserStatusUseCase
+        this.updateUserStatusUseCase,
+        this.getAllUsersUseCase
+
     );
 
     static readonly clientController = new ClientController(

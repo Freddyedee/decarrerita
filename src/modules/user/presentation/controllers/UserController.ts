@@ -9,6 +9,7 @@ import { UserResponse } from "../../application/dto/UserResponse";
 
 import { UpdateUserProfileRequest } from "../../application/dto/UpdateUserProfileRequest";
 import { UpdateUserStatusRequest } from "../../application/dto/UpdateUserStatusRequest";
+import { GetAllUsersUseCase } from "../../application/use-cases/GetAllUsersUseCase";
 
 export class UserController {
 
@@ -20,7 +21,9 @@ export class UserController {
 
         private readonly updateUserProfileUseCase: UpdateUserProfileUseCase,
 
-        private readonly updateUserStatusUseCase: UpdateUserStatusUseCase
+        private readonly updateUserStatusUseCase: UpdateUserStatusUseCase,
+
+        private readonly getAllUsersUseCase: GetAllUsersUseCase
 
     ) {}
 
@@ -54,6 +57,10 @@ export class UserController {
 
         return await this.updateUserStatusUseCase.execute(request);
 
+    }
+
+    async getAllUsers(): Promise<UserResponse[]> {
+        return await this.getAllUsersUseCase.execute();
     }
 
 }

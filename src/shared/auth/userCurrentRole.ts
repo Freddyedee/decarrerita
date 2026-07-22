@@ -39,7 +39,9 @@ function mapIdRolToRol(idRol: number): Rol {
 
 export async function getCurrentRole(): Promise<SesionActual | null> {
 
-    const token = cookies().get("session_token")?.value;
+    const cookieStore = await cookies(); 
+
+    const token = cookieStore.get("session_token")?.value;
     if (!token) return null;
 
     try {

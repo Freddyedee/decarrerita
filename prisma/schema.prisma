@@ -65,6 +65,7 @@ model chofer {
   estado_aprobacion      String                   @db.VarChar(20)
   puntaje_promedio       Decimal?                 @default(5.00) @db.Decimal(3, 2)
   viajes_completados     Int?                     @default(0)
+  disponible             Boolean                  @default(false) // <--- ¡NUEVO CAMPO AQUÍ!
 
   // ------
   id_banco               Int?

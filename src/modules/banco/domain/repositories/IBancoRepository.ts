@@ -6,6 +6,7 @@
  */
 
 import { Banco } from "../entities/Banco";
+import { CreateBancoDTO } from "../../application/DTO/CreateBancoDto";
 
 /**
  * Puerto de Salida (Output Port): IBancoRepository
@@ -24,4 +25,8 @@ export interface IBancoRepository {
   
   // Lista todos los bancos (ideal para llenar los combobox/selects en el Frontend)
   findAll(): Promise<Banco[]>;
+
+  create(data: CreateBancoDTO): Promise<Banco>;
+
+  updateStatus(id: number, activo: boolean): Promise<Banco>;
 }

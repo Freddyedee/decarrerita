@@ -141,4 +141,15 @@ export class PrismaUserRepository implements IUserRepository {
 
     }
 
+    async findAll(): Promise<User[]> {
+            // Buscamos todos los usuarios en la base de datos (ordenados por el más reciente)
+            const users = await this.prisma.usuario.findMany({
+                orderBy: {
+                    fecha_creacion: 'desc'
+                }
+            });
+    
+            // Usamos tu superpoderoso toDomain para mapearlos todos automáticamente
+            return users.map(user => this.toDomain(user));
+        }
 }
