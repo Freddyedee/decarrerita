@@ -4,18 +4,20 @@ import { useState, useEffect } from "react";
 import { Car, Hash, Calendar, Loader2, Plus, Type, Users, Palette } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-// Interfaces basadas en los DTOs que probablemente tienes en tu backend
 interface Marca {
   id: number;
-  nombre: string;
+  nombre: string; // O 'name', si tu DB de marcas lo devuelve en inglés
 }
 
+// 🛠️ 1. ACTUALIZAMOS LA INTERFAZ PARA QUE COINCIDA CON EL DTO DEL BACKEND
 interface Vehiculo {
   id: number;
-  placa: string;
-  modelo: string;
-  año: number;
-  marcaId: number;
+  plate: string;      // Antes 'placa'
+  model: string;      // Antes 'modelo'
+  year: number;       // Antes 'año'
+  brandId: number;    // Antes 'marcaId'
+  color: string;      // Nuevo
+  passengerCapacity: number; // Nuevo
   status?: string; 
 }
 
@@ -27,19 +29,17 @@ export default function VehiculosPanel({ choferId }: { choferId: number }) {
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Estados del Formulario (Ajusta los nombres si tu DTO los espera distinto)
+    // Estados del Formulario (se quedan en español por comodidad interna)
     const [placa, setPlaca] = useState("");
     const [modelo, setModelo] = useState("");
     const [año, setAño] = useState(new Date().getFullYear().toString());
     const [marcaId, setMarcaId] = useState("");
     const [color, setColor] = useState("");
-    const [capacidad, setCapacidad] = useState("4"); // Por defecto 4 pasajeros
+    const [capacidad, setCapacidad] = useState("4");
 
   const fetchData = async () => {
     try {
-      // 1. Buscamos los vehículos del chofer
       const resVehiculos = await fetch(`/api/vehicles/driver/${choferId}`);
-      // 2. Buscamos las marcas disponibles
       const resMarcas = await fetch(`/api/marcas`);
       
       const jsonVehiculos = await resVehiculos.json();
@@ -64,19 +64,21 @@ export default function VehiculosPanel({ choferId }: { choferId: number }) {
     setIsSubmitting(true);
 
     try {
-      // Enviamos el payload a tu ruta de creación de vehículos
+      // 🛠️ 2. EL PAYLOAD TRADUCE LOS ESTADOS EN ESPAÑOL AL DTO EN INGLÉS
+      const payload = {
+        driverId: choferId, 
+        brandId: Number(marcaId),  
+        plate: placa,              
+        model: modelo,             
+        year: Number(año),         
+        color: color,
+        passengerCapacity: Number(capacidad)
+      };
+
       const res = await fetch(`/api/vehicles`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-            driverId: choferId, // O driverUserId, según lo espere tu CreateVehicleDTO
-            brandId: Number(marcaId),  // Tu estado es marcaId, la API espera brandId
-            plate: placa,              // Tu estado es placa, la API espera plate
-            model: modelo,             // Tu estado es modelo, la API espera model
-            year: Number(año),         // Tu estado es año, la API espera year
-            color: color,
-            passengerCapacity: Number(capacidad)
-        }),
+        body: JSON.stringify(payload),
       });
 
       const json = await res.json();
@@ -84,13 +86,14 @@ export default function VehiculosPanel({ choferId }: { choferId: number }) {
 
       alert("¡Vehículo registrado con éxito! Pendiente de revisión.");
       
-      // Limpiamos el formulario
       setPlaca("");
       setModelo("");
       setAño(new Date().getFullYear().toString());
       setMarcaId("");
+      setColor("");
+      setCapacidad("4");
       
-      fetchData(); // Recargamos la lista
+      fetchData(); 
       router.refresh();
       
     } catch (error: any) {
@@ -102,7 +105,6 @@ export default function VehiculosPanel({ choferId }: { choferId: number }) {
 
   if (isLoading) return <div className="flex justify-center p-6"><Loader2 className="animate-spin text-blue-500" /></div>;
 
-  // Regla de Negocio: Mínimo 1 vehículo
   const faltanVehiculos = vehiculos.length < 1;
 
   return (
@@ -129,7 +131,6 @@ export default function VehiculosPanel({ choferId }: { choferId: number }) {
       </div>
 
       <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Formulario */}
         <div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -184,12 +185,10 @@ export default function VehiculosPanel({ choferId }: { choferId: number }) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Año</label>
-
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Calendar className="h-4 w-4 text-gray-400" />
                   </div>
-
                   <input
                     type="number"
                     required
@@ -200,19 +199,15 @@ export default function VehiculosPanel({ choferId }: { choferId: number }) {
                     className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-xl focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   />
                 </div>
-
               </div>
             </div>
                 
-                {/** CAMPOS PARA EL VEHÍCULO (COLOR Y CAPACIDAD) */}
             <div className="grid grid-cols-2 gap-4">
-              
-              {/* SELECT DE COLOR */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Palette className="h-4 w-4 text-gray-400" /> {/* Usa Palette o manten Type */}
+                    <Palette className="h-4 w-4 text-gray-400" />
                   </div>
                   <select
                     required
@@ -234,12 +229,11 @@ export default function VehiculosPanel({ choferId }: { choferId: number }) {
                 </div>
               </div>
 
-              {/* SELECT DE CAPACIDAD */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Capacidad (Pasajeros)</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Users className="h-4 w-4 text-gray-400" /> {/* Usa Users o manten Type */}
+                    <Users className="h-4 w-4 text-gray-400" />
                   </div>
                   <select
                     required
@@ -257,7 +251,6 @@ export default function VehiculosPanel({ choferId }: { choferId: number }) {
                   </select>
                 </div>
               </div>
-
             </div>
 
             <button
@@ -271,7 +264,6 @@ export default function VehiculosPanel({ choferId }: { choferId: number }) {
           </form>
         </div>
 
-        {/* Lista de Vehículos Agregados */}
         <div>
           <h3 className="text-sm font-bold text-gray-800 mb-4 border-b pb-2">Vehículos Registrados</h3>
           {vehiculos.length === 0 ? (
@@ -279,22 +271,29 @@ export default function VehiculosPanel({ choferId }: { choferId: number }) {
           ) : (
             <ul className="space-y-3">
               {vehiculos.map((vehiculo) => {
-                // Buscamos el nombre de la marca para mostrarlo bonito
-                const marca = marcas.find(m => m.id === vehiculo.marcaId)?.nombre || 'Marca Desconocida';
+                // 🛠️ 3. BUSCAMOS LA MARCA USANDO EL ID CORRECTO Y MOSTRAMOS LAS VARIABLES EN INGLÉS
+                const marca = marcas.find(m => m.id === vehiculo.brandId)?.nombre || 'Marca Desconocida';
                 return (
-                  <li key={vehiculo.id} className="bg-gray-50 p-4 rounded-xl border border-gray-200 flex justify-between items-center">
-                    <div>
-                      <p className="font-bold text-gray-800 text-sm flex items-center gap-2">
-                        {marca} {vehiculo.modelo} ({vehiculo.año})
-                      </p>
-                      <p className="text-xs text-gray-500 font-mono mt-1">Placa: {vehiculo.placa}</p>
+                  <li key={vehiculo.id} className="bg-gray-50 p-4 rounded-xl border border-gray-200 flex flex-col gap-2">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="font-bold text-gray-800 text-sm flex items-center gap-2">
+                          {marca} {vehiculo.model} ({vehiculo.year})
+                        </p>
+                        <p className="text-xs text-gray-500 font-mono mt-1">Placa: {vehiculo.plate}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className={`px-2 py-1 text-xs font-bold rounded uppercase ${
+                          vehiculo.status === 'APROBADO' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {vehiculo.status || 'EN REVISION'}
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <span className={`px-2 py-1 text-xs font-bold rounded uppercase ${
-                        vehiculo.status === 'APROBADO' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-                      }`}>
-                        {vehiculo.status || 'PENDIENTE'}
-                      </span>
+                    {/* MOSTRAMOS EL COLOR Y LA CAPACIDAD QUE ACABAS DE AGREGAR */}
+                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 border-t pt-2 mt-1">
+                      <p><span className="font-semibold">Color:</span> {vehiculo.color || 'N/A'}</p>
+                      <p><span className="font-semibold">Capacidad:</span> {vehiculo.passengerCapacity || 'N/A'} pax</p>
                     </div>
                   </li>
                 );
