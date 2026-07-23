@@ -53,19 +53,19 @@ export const CLIENT_MENU: ClientMenuItem[] = [
   {
     id: "wallet",
     label: "Wallet",
-    href: "/wallet",
+    href: "/cliente/wallet",
     icon: Wallet,
   },
   {
     id: "history",
     label: "Historial",
-    href: "/historial",
+    href: "/cliente/historial",
     icon: History,
   },
   {
     id: "profile",
     label: "Mi perfil",
-    href: "/perfil",
+    href: "/cliente/perfil",
     icon: UserRound,
   },
 ];

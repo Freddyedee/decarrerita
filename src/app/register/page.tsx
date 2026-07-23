@@ -27,7 +27,7 @@ export default function RegisterPage() {
       lastName: formData.get("lastName"),
       email: formData.get("email"),
       phone: formData.get("phone"),
-      passwordHash: formData.get("password"), // En un flujo real, esto se hashea en el backend
+      password: formData.get("password"), // En un flujo real, esto se hashea en el backend
     };
 
     // Si es chofer, agregamos la licencia (obligatoria por tu RN-027)

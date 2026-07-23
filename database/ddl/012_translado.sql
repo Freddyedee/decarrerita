@@ -27,3 +27,15 @@ CREATE TABLE traslado (
 
 
 
+ALTER TABLE traslado DROP CONSTRAINT IF EXISTS traslado_estado_actual_check;
+
+ALTER TABLE traslado ADD CONSTRAINT traslado_estado_actual_check 
+  CHECK (estado_actual IN (
+    'SOLICITADO', 
+    'BUSCANDO_CHOFER', 
+    'EN_CURSO', 
+    'SIN_CHOFER', 
+    'FINALIZADO', 
+    'CANCELADO', 
+    'EN_CAMINO'
+  ));

@@ -1,5 +1,6 @@
 import { listUsers } from '@modules/user/application/listUsers';
 
+
 export default async function HomePage() {
   const users = await listUsers();
 

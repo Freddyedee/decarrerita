@@ -30,7 +30,7 @@ export class Recarga {
         private readonly referenciaPago: string,
         private status: EstadoRecarga,
         public readonly fechaSolicitud: Date,
-        public readonly fechaAprobacion: Date | null
+        public fechaAprobacion: Date | null
     ) {
 
         this.validateMonto(monto);
@@ -71,5 +71,13 @@ export class Recarga {
     }
     getFechaAprobacion(): Date | null { 
         return this.fechaAprobacion;
+    }
+
+    setStatus(newStatus: EstadoRecarga): void {
+        this.status = newStatus;
+    }
+
+    setFechaAprobacion(fecha: Date): void {
+        this.fechaAprobacion = fecha;
     }
 }
