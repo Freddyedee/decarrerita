@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { User, Mail, Phone, Lock, Car, BadgeCheck } from "lucide-react";
 import Link from "next/link";
+import { NationalId } from "@/modules/user/domain/value-objects";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -25,9 +26,10 @@ export default function RegisterPage() {
       role: role,
       firstName: formData.get("firstName"),
       lastName: formData.get("lastName"),
+      NationalId: formData.get("nationalId"), 
       email: formData.get("email"),
       phone: formData.get("phone"),
-      passwordHash: formData.get("password"), // En un flujo real, esto se hashea en el backend
+      password: formData.get("password"), // En un flujo real, esto se hashea en el backend
     };
 
     // Si es chofer, agregamos la licencia (obligatoria por tu RN-027)
@@ -122,6 +124,24 @@ export default function RegisterPage() {
               </div>
             </div>
 
+            {/** CEDULA PRUEBA */}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Cédula de Identidad</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <BadgeCheck className="h-5 w-5 text-gray-400" /> {/* O cualquier icono que prefieras */}
+                </div>
+                <input 
+                  name="nationalId" 
+                  type="text" 
+                  required 
+                  className="pl-10 block w-full rounded-xl border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-50 border p-2.5" 
+                  placeholder="V-12345678" 
+                />
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
               <div className="relative">
@@ -141,6 +161,8 @@ export default function RegisterPage() {
                 <input name="phone" type="tel" required className="pl-10 block w-full rounded-xl border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-50 border p-2.5" placeholder="+584141234567" />
               </div>
             </div>
+
+
 
             {/* CAMPOS DINÁMICOS PARA EL CHOFER */}
             {role === 3 && (

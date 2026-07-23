@@ -4,10 +4,14 @@ import { CreateVehicleDTO } from "@/modules/vehicles/application/dto/create-vehi
 
 export async function POST(req: NextRequest) {
 
+  
   try {
-
+    console.log("🚩 [VEHÍCULOS] PASO 1: Entrando a POST /api/vehicles");
+    
     // Convertimos request HTTP a objeto plano
     const raw = await req.json();
+
+    console.log("🚩 [VEHÍCULOS] PASO 2: Body recibido del frontend:", raw);
 
     const body: CreateVehicleDTO = {
       brandId: Number(raw.brandId),
@@ -22,6 +26,8 @@ export async function POST(req: NextRequest) {
     // Ejecutamos lógica del dominio
     const result = await vehicleController.create(body);
 
+    console.log("🚩 [VEHÍCULOS] PASO 3: Vehículo creado exitosamente");
+
     // Respuesta HTTP (único lugar que conoce Next.js)
     return NextResponse.json(
       {
@@ -31,7 +37,9 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
 
-  } catch (error) {
+  } catch (error: any) {
+
+    console.error("❌ [VEHÍCULOS] ERROR FATAL ATRAPADO:", error.message || error);
 
     // Manejo de errores controlado
     return NextResponse.json(

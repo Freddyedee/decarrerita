@@ -33,8 +33,9 @@ select * from vehiculo
 
 select * from evaluacion_psicologica
 
-select * from usuario
-
+select * from vehiculo;
+select * from usuario;
+select * from contacto_emergencia;
 select * from banco; 
 
 INSERT INTO usuario (id_rol, nombre, apellido, email, telefono, password_hash, estado)
