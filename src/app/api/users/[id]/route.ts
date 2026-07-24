@@ -10,22 +10,19 @@ interface RouteParams {
 }
 
 export async function GET(
-    request: NextRequest, { params }: { params: Promise<{ idParams : string}> }
+    request: NextRequest, { params }: { params: Promise<{ id : string}> }
 ) {
-
     try {
+        // 1. Extraemos el id de la promesa
+        const { id } = await params; 
 
-      const { idParams } =await params; 
-
-        const id = Number(idParams);
-
-        const response =
-            await UserContainer.userController.getUserById(id);
+        // 2. Lo convertimos a número y lo pasamos al controlador
+        const userId = Number(id);
+        const response = await UserContainer.userController.getUserById(userId);
 
         return NextResponse.json(response);
 
     } catch (error) {
-
         return NextResponse.json(
             {
                 message:
@@ -37,9 +34,7 @@ export async function GET(
                 status: 404
             }
         );
-
     }
-
 }
 
 export async function PUT(
