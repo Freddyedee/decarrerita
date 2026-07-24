@@ -50,21 +50,16 @@ export async function POST(
 }
 
 export async function GET(
-    request: NextRequest,
-    {
-        params,
-    }: {
-        params: {
-            id: string;
-        };
-    }
+    request: NextRequest, { params }: { params: Promise<{ id : string}> }
+
 ) {
 
     try {
+        const {id} = await params; 
 
         const response =
             await UserContainer.psychologicalEvaluationController.getByDriver(
-                Number(params.id)
+                Number(id)
             );
 
         return NextResponse.json(response);
