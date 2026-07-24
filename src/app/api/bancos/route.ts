@@ -4,8 +4,9 @@ import { GetAllBancosUseCase } from "@/modules/banco/application/use-cases/GetAl
 import { CreateBancoUseCase } from "@/modules/banco/application/use-cases/CreateBancoUseCase";
 import { UpdateBancoStatusUseCase } from "@/modules/banco/application/use-cases/UpdateBancoStatusUseCase";
 import { BancoMapper } from "@/modules/banco/infrastructure/mappers/banco.mapper";
+import { prisma } from "@/shared/lib/prisma";
 
-const bancoRepository = new BancoRepository();
+const bancoRepository = new BancoRepository(prisma);
 
 export async function GET() {
   try {
