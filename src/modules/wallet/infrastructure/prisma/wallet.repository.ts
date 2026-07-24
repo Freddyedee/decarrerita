@@ -21,6 +21,15 @@ export class WalletRepository implements IWalletRepository {
         return wallet ? walletMapper.toDomain(wallet) : null;
     }
 
+    async findById(id: number, tx?: Prisma.TransactionClient): Promise<Wallet | null> {
+        const client = tx ?? prisma; 
+        const wallet = await client.wallet.findUnique({
+            where: { id_wallet: id } // Buscamos directamente por id_wallet
+        });
+
+        return wallet ? walletMapper.toDomain(wallet) : null;
+    }
+
     /**
      * Actualiza el saldo Y registra el movimiento en una sola
      * transacción de Prisma — si algo falla a mitad de camino,

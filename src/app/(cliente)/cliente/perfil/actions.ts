@@ -1,39 +1,51 @@
 "use server";
 
 import { UserContainer } from "@/shared/container/UserContainer";
+import { UpdateUserProfileRequest } from "@/modules/user/application/dto/UpdateUserProfileRequest";
 import { revalidatePath } from "next/cache";
+import bcrypt from "bcrypt"; // 👈 1. Importamos el encriptador (o "bcrypt" si usas ese)
 
 export async function actualizarPerfil(
   userId: number, 
   email: string, 
-  currentPasswordHash: string,
   formData: FormData
 ) {
   try {
     const firstName = formData.get("firstName") as string;
     const lastName = formData.get("lastName") as string;
-    const phone = formData.get("phone") as string; // Aquí lo extraemos
+    const phone = formData.get("phone") as string;
+    const passwordRaw = formData.get("password") as string;
     
-    const passwordHashToSend = currentPasswordHash; 
+    if (!firstName || !lastName || !phone || !passwordRaw) {
+      return { success: false, error: "Todos los campos, incluida la contraseña, son obligatorios." };
+    }
 
-    // Ejecutamos el caso de uso agregando el campo 'phone'
-    await UserContainer.updateUserProfileUseCase.execute({
+    // 👈 2. ENCRIPTAMOS LA CONTRASEÑA EN TEXTO PLANO
+    // El '10' es el costo algorítmico estándar (hace que el hash tenga 60 caracteres)
+    const passwordHashed = await bcrypt.hash(passwordRaw.trim(), 10);
+
+    // 3. Ahora sí le enviamos el HASH validado al contrato
+    const payload: UpdateUserProfileRequest = {
       userId,
-      firstName,
-      lastName,
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
       email,
-      phone, 
-      password: passwordHashToSend, 
-    });
+      phone: phone.trim(),
+      password: passwordHashed, // 👈 Satisfacemos al Value Object PasswordHash
+    };
 
+    // Ejecutamos el caso de uso
+    await UserContainer.updateUserProfileUseCase.execute(payload);
+
+    // Refrescamos las rutas
+    revalidatePath("/cliente/perfil");
+    revalidatePath("/cliente");
     revalidatePath("/perfil");
-    return { success: true, message: "Perfil actualizado correctamente." };
-  } catch (error: unknown) { // ¡SOLUCIONADO! Usamos unknown en lugar de any
-    console.error("Error al actualizar perfil:", error);
-    
-    // Verificamos si el error es una instancia de la clase Error
-    const errorMessage = error instanceof Error ? error.message : "Ocurrió un error desconocido.";
-    
+
+    return { success: true, message: "¡Perfil y credenciales actualizados con éxito!" };
+  } catch (error: unknown) {
+    console.error("❌ [ERROR ACTUALIZANDO PERFIL]:", error);
+    const errorMessage = error instanceof Error ? error.message : "Error al actualizar perfil.";
     return { success: false, error: errorMessage };
   }
 }

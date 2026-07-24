@@ -22,3 +22,5 @@ CREATE TABLE recarga (
     FOREIGN KEY (id_banco) 
     REFERENCES banco(id_banco)
 ); 
+
+SELECt * FROM recarga;

@@ -5,6 +5,9 @@ export interface IWalletRepository {
 
     findByUsuarioId(usuarioId: number, tx?: Prisma.TransactionClient ): Promise <Wallet | null>
 
+    // NUEVO: Buscar la wallet por su propio ID (id_wallet)
+    findById(id: number, tx?: Prisma.TransactionClient): Promise<Wallet | null>;
+
     /**
      * Persiste el nuevo saldo Y registra el movimiento en
      * movimiento_wallet (saldo_anterior, saldo_posterior),

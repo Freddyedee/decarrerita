@@ -220,7 +220,4 @@ export class Traslado {
             || this.estadoActual === EstadoTraslado.FINALIZADO;
     }
 
-
-
-
 }

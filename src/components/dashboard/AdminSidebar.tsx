@@ -14,7 +14,8 @@ import {
   BarChart3, 
   Settings, 
   ShieldCheck,
-  Building
+  Building,
+  CreditCard
 } from "lucide-react";
 
 export function AdminSidebar() {
@@ -49,6 +50,7 @@ export function AdminSidebar() {
       links: [
         { href: "/tarifas", label: "Tarifas", icon: Banknote },
         { href: "/pagos", label: "Pagos a Choferes", icon: Wallet },
+        { href: "/recargas", label: "Validar Recargas", icon: CreditCard },
         { href: "/bancos", label: "Entidades Bancarias", icon: Building },
         { href: "/reportes", label: "Reportes Financieros", icon: BarChart3 },
       ],
