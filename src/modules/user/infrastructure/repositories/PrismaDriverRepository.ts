@@ -105,4 +105,64 @@ export class PrismaDriverRepository implements IDriverRepository {
             }
         });
     }
+
+    /**
+     * Busca todos los choferes disponibles cuyo vehículo y perfil psicológico 
+     * cumplan estrictamente con las reglas de negocio del sistema:
+     * - Nota psicológica >= 73 (y no vencida)
+     * - Nota revisión vehicular >= 65 (y no vencida)
+     */
+    async findAvailableAndAptDrivers(): Promise<any[]> {
+        const choferesAptos = await this.prisma.$queryRaw`
+            WITH ultima_evaluacion AS (
+                SELECT id_chofer, calificacion, fecha_vencimiento
+                FROM (
+                    SELECT 
+                        id_chofer, 
+                        calificacion, 
+                        fecha_vencimiento,
+                        ROW_NUMBER() OVER(PARTITION BY id_chofer ORDER BY fecha_evaluacion DESC) as rn
+                    FROM evaluacion_psicologica
+                ) t
+                WHERE rn = 1
+            ),
+            ultima_revision AS (
+                SELECT id_vehiculo, calificacion, fecha_vencimiento
+                FROM (
+                    SELECT 
+                        id_vehiculo, 
+                        calificacion, 
+                        fecha_vencimiento,
+                        ROW_NUMBER() OVER(PARTITION BY id_vehiculo ORDER BY fecha_revision DESC) as rn
+                    FROM revision_vehicular
+                ) t
+                WHERE rn = 1
+            )
+            SELECT 
+                c.id_usuario AS id_chofer,
+                u.nombre AS nombre_chofer,
+                u.telefono,
+                v.id_vehiculo,
+                v.placa,
+                v.modelo,
+                ue.calificacion AS nota_psicologica,
+                ur.calificacion AS nota_vehicular
+            FROM chofer c
+            INNER JOIN usuario u ON c.id_usuario = u.id_usuario
+            INNER JOIN vehiculo v ON c.id_usuario = v.id_chofer
+            INNER JOIN ultima_evaluacion ue ON c.id_usuario = ue.id_chofer
+            INNER JOIN ultima_revision ur ON v.id_vehiculo = ur.id_vehiculo
+            WHERE c.disponible = true
+              AND c.estado_aprobacion = 'APROBADO'
+              AND v.estado = 'activo'
+              AND ue.calificacion >= 73
+              AND ue.fecha_vencimiento >= CURRENT_DATE
+              AND ur.calificacion >= 65
+              AND ur.fecha_vencimiento >= CURRENT_DATE;
+        `;
+
+        return choferesAptos as any[];
+    }
+
+    
 }

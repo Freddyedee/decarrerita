@@ -14,6 +14,8 @@ export interface IDriverRepository {
     updateStatus(driverUserId: number, status: string): Promise<void>;
 
     updateAvailability(driverUserId: number, isAvailable: boolean): Promise<void>;
+
+    findAvailableAndAptDrivers(): Promise<any[]>;
     
     create(
         userId: number,
@@ -22,5 +24,8 @@ export interface IDriverRepository {
         bankId: number | null, // <-- Añadimos el banco a la firma de creación
         tx?: Prisma.TransactionClient
     ): Promise<Driver>;
+
+
+
 
 }

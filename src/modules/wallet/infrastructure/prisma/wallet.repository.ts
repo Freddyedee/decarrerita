@@ -124,7 +124,53 @@ export class WalletRepository implements IWalletRepository {
 
     async calcularCambioNetoSaldo(usuarioId: number, desde: Date, hasta: Date): Promise<number> {
 
-    const wallet = await prisma.wallet.findUnique({ where: { id_usuario: usuarioId } });
+        const resultado: any[] = await prisma.$queryRaw`
+
+            WITH target_wallet AS (
+                SELECT id_wallet
+                FROM wallet
+                WHERE id_usuario = ${usuarioId}
+                LIMIT 1    
+            ),
+
+            ultimo_antes AS (
+                SELECT saldo_posterior
+                FROM movimiento_wallet
+                WHERE id_wallet = (SELECT id_wallet FROM target_wallet)
+                    AND fecha_movimiento < ${desde}
+                ORDER BY fecha_movimiento DESC
+                LIMIT 1
+            ),
+
+            ultimo_dentro AS (
+                SELECT saldo_posterior
+                FROM movimiento_wallet
+                WHERE id_wallet = (SELECT id_wallet FROM target_wallet)
+                    AND fecha_movimiento >= ${desde}
+                    AND fecha_movimiento <= ${hasta}
+                ORDER BY fecha_movimiento DESC 
+                LIMIT 1
+            )
+                SELECT (
+
+                    COALESCE((SELECT saldo_posterior FROM ultimo_dentro), COALESCE((SELECT saldo_posterior FROM ultimo_antes), 0))
+                    -
+                    COALESCE((SELECT saldo_posterior FROM ultimo_antes), 0)
+                ) AS "cambioNeto"; 
+        `;
+
+        // Si la wallet no existe, o no hubo un cálculo válido, retornamos 0
+    if (!resultado || resultado.length === 0 || resultado[0].cambioNeto === null) {
+        return 0;
+    }
+
+    return Number(resultado[0].cambioNeto);
+
+    }
+
+}
+
+    /*const wallet = await prisma.wallet.findUnique({ where: { id_usuario: usuarioId } });
     if (!wallet) return 0;
 
     // El saldo ANTES del período: el saldo_posterior del último
@@ -146,9 +192,6 @@ export class WalletRepository implements IWalletRepository {
 
     return saldoFin - saldoInicio;
 }
-
-
-    
+     */
 
     
-}

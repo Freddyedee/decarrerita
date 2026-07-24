@@ -1,5 +1,4 @@
 
-
 INSERT INTO rol (nombre, descripcion)
 
 VALUES 

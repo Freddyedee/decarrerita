@@ -62,24 +62,35 @@ export class SolicitarTrasladoUseCase{
         const costoEstimado = tarifa.calcularCosto(input.distanciaEstimadaKm); 
 
 
-        // 3. CANDIDATOS: todos los vehículos actualmente ACTIVE
-        //    (chofer con vehículo seleccionado y apto para circular).
+        // ====================================================================
+        // 3. CANDIDATOS FILTRADOS POR REGLAS DE NEGOCIO (SQL PURO)
+        // Solo traemos a los choferes que pasaron la psicológica (>= 73)
+        // y cuya revisión vehicular está aprobada (>= 65).
+        // ====================================================================
 
-        const vehiculosActivos = await this.vehicleRepository.findAllActive();
 
-        if(vehiculosActivos.length == 0){ 
-            throw new Error('No available drivers at this moment');
+        const choferesAptos = await this.driverRepository.findAvailableAndAptDrivers();
+
+        if(choferesAptos.length == 0){ 
+            throw new Error('No drivers currently available that meet the strict quality standards (Evaluation/Inspection).');
         }
 
-        // 4. PRIORIDAD: se ordenan los candidatos por el puntaje , promedio de cada chofer (mayor puntaje, mayor prioridad).
-        //    Un chofer con mejor historial recibe la oferta primero.
+        // ====================================================================
+        // 4. PRIORIDAD: ordenamos la élite de choferes por su puntaje promedio.
+        // Como nuestra consulta SQL ya nos devuelve el id_chofer e id_vehiculo
+        // juntos, el mapeo es directo y mucho más limpio.
+        // ====================================================================
 
         const candidatoConPuntaje = await Promise.all(
-            vehiculosActivos.map(async (vehiculo) => {
-                const puntaje = await this.driverRepository.findPuntajeByChoferId(vehiculo.driverId); 
-                return { choferId: vehiculo.driverId, vehiculoId: vehiculo.id, puntaje: puntaje ?? 0}; 
+            choferesAptos.map(async (candidato: any) => {
+                const puntaje = await this.driverRepository.findPuntajeByChoferId(candidato.id_chofer); 
+                return { 
+                    choferId: candidato.id_chofer, 
+                    vehiculoId: candidato.id_vehiculo, 
+                    puntaje: puntaje ?? 0
+                }; 
             })
-        )
+        );
 
         candidatoConPuntaje.sort((a,b) => Number(b.puntaje) - Number(a.puntaje)); //verificar
 

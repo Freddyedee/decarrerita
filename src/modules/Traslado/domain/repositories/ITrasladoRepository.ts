@@ -46,4 +46,13 @@ export interface ITrasladoRepository {
      */
     hasChoferTrasladoEnCurso(choferId: number): Promise<boolean>;
 
+    /**
+     * Listado de los traslados cancelados (pagados) por la empresa.
+     */
+    findTrasladosPagados(): Promise<any[]>;
+
+    /**
+     * Listado de traslados pendientes por cancelar (pagar).
+     */
+    findTrasladosPendientesPago(): Promise<any[]>;
 }
