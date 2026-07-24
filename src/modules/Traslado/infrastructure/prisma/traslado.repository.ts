@@ -64,4 +64,44 @@ export class TrasladoRepository implements TrasladoRepository{
         return count > 0;
     }
 
+
+    async getTrasladosPorChoferYEstado(
+        choferId: number, 
+        estados: string[], 
+        desde: Date, 
+        hasta: Date
+    ): Promise<any[]> {
+        
+        // Prevención de errores SQL: Si no hay estados, retornamos un arreglo vacío
+        if (!estados || estados.length === 0) {
+            return [];
+        }
+
+        // Prisma.join() es vital aquí: descompone el arreglo de strings en 
+        // una lista segura separada por comas para la cláusula IN (...), 
+        // evitando inyecciones SQL.
+        const resultado = await prisma.$queryRaw<any[]>`
+            SELECT 
+                t.id_traslado,
+                t.fecha_solicitud,
+                t.origen_latitud,
+                t.origen_longitud,
+                t.destino_latitud,
+                t.destino_longitud,
+                t.distancia_estimada_km,
+                t.costo_estimado,
+                t.estado_actual
+            FROM 
+                traslado t
+            WHERE 
+                t.id_chofer = ${choferId}
+                AND t.estado_actual IN (${Prisma.join(estados)})
+                AND t.fecha_solicitud >= ${desde}
+                AND t.fecha_solicitud <= ${hasta}
+            ORDER BY 
+                t.fecha_solicitud DESC;
+        `;
+
+        return resultado;
+    }
 }

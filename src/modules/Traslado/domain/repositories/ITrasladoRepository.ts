@@ -55,4 +55,20 @@ export interface ITrasladoRepository {
      * Listado de traslados pendientes por cancelar (pagar).
      */
     findTrasladosPendientesPago(): Promise<any[]>;
+
+    /**
+     * ============================================================
+     * REPORTES DEL CHOFER (REQUERIMIENTOS DEL PROYECTO)
+     * ============================================================
+     * Reemplaza a findTrasladosPagados y findTrasladosPendientesPago.
+     * Permite filtrar dinámicamente por chofer, rango de fechas y 
+     * múltiples estados (COMPLETADO, CANCELADO_EMPRESA, PENDIENTE_PAGO).
+     */
+    getTrasladosPorChoferYEstado(
+        choferId: number, 
+        estados: string[], 
+        desde: Date, 
+        hasta: Date
+    ): Promise<any[]>;
+
 }
