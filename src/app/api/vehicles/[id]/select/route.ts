@@ -2,14 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { vehicleController } from "@/modules/vehicles/presentation/vehicle.modules";
 
 export async function POST(
-  req: NextRequest,
-  { params }: { params: { id: string } }
+  request: NextRequest, { params }: { params: Promise<{ id : string}> }
 ) {
   try {
-    const body = await req.json(); // { driverId: number }
+
+    const { id } = await params; 
+    const body = await request.json(); // { driverId: number }
 
     const vehicle = await vehicleController.select(
-      Number(params.id),
+      Number(id),
       Number(body.driverId)
     );
 

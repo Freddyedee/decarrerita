@@ -5,23 +5,18 @@ import { UserContainer } from "@/shared/container/UserContainer";
 import { UpdateDriverLicenseRequest } from "@modules/user/application/dto/UpdateDriverLicenseRequest";
 
 export async function PATCH(
-    request: NextRequest,
-    {
-        params,
-    }: {
-        params: {
-            id: string;
-        };
-    }
+    request: NextRequest, { params }: { params: Promise<{ id : string}> }
 ) {
 
     try {
-
+        
+        const {id} = await params; 
+        
         const body = await request.json();
 
         const dto: UpdateDriverLicenseRequest = {
 
-            userId: Number(params.id),
+            userId: Number(id),
 
             licenseNumber: body.licenseNumber
 

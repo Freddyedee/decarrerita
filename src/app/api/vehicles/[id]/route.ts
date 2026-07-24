@@ -5,14 +5,15 @@ import { UpdateVehicleStatusUseCase } from "@/modules/vehicles/application/use-c
 import { VehicleRepository } from "@/modules/vehicles/infrastructure/prisma/vehicle.repository";
 
 export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
+  request: NextRequest, { params }: { params: Promise<{ id : string}> }
 ) {
   try {
+
+    const { id} = await params; 
     const repository = new VehicleRepository();
     const useCase = new GetVehicleByIdUseCase(repository);
 
-    const vehicle = await useCase.execute(Number(params.id));
+    const vehicle = await useCase.execute(Number(id));
 
     return NextResponse.json(
       { message: "Vehicle retrieved successfully", data: vehicle },
@@ -30,16 +31,16 @@ export async function GET(
 }
 
 export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
+    request: NextRequest, { params }: { params: Promise<{ id : string}> }
+
 ) {
   try {
-    const body = await req.json(); // { status: "activo" | "inactivo" | "en_revision" | "mantenimiento" }
-
+    const body = await request.json(); // { status: "activo" | "inactivo" | "en_revision" | "mantenimiento" }
+    const { id} = await params; 
     const repository = new VehicleRepository();
     const useCase = new UpdateVehicleStatusUseCase(repository);
 
-    const vehicle = await useCase.execute(Number(params.id), body.status);
+    const vehicle = await useCase.execute(Number(id), body.status);
 
     return NextResponse.json(
       { message: "Vehicle status updated successfully", data: vehicle },

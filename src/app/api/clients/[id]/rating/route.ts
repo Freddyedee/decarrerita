@@ -6,14 +6,10 @@ import { UpdateClientRatingRequest } from "@modules/user/application/dto/UpdateC
 
 export async function PATCH(
     request: NextRequest,
-    {
-        params,
-    }: {
-        params: {
-            id: string;
-        };
-    }
+    {    params } : { params: Promise<{ id: string; }> }
 ) {
+
+    const {id} = await params; 
 
     try {
 
@@ -21,7 +17,7 @@ export async function PATCH(
 
         const dto: UpdateClientRatingRequest = {
 
-            userId: Number(params.id),
+            userId: Number(id),
 
             averageRating: body.averageRating
 

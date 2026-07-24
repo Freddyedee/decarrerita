@@ -3,14 +3,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { UserContainer } from "@/shared/container/UserContainer";
 
 export async function GET(
-    request: NextRequest,
-    { params }: { params: { id: string } }
+    request: NextRequest, { params }: { params: Promise<{ id : string}> }
+
 ) {
 
     try {
 
+        const {id} = await params; 
+
         const response =
-            await UserContainer.driverController.getById(Number(params.id));
+            await UserContainer.driverController.getById(Number(id));
 
         return NextResponse.json(
             { message: "Driver retrieved successfully", data: response },

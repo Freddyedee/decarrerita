@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { revisionController } from "@/modules/vehicles/presentation/vehicle.modules";
 
 export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
+      request: NextRequest, { params }: { params: Promise<{ id : string}> }
+
 ) {
   try {
-    const history = await revisionController.getHistory(Number(params.id));
+    const {id} = await params; 
+    
+    const history = await revisionController.getHistory(Number(id));
     return NextResponse.json(
       { message: "Inspection history retrieved successfully", data: history },
       { status: 200 }
@@ -20,14 +22,15 @@ export async function GET(
 }
 
 export async function POST(
-  req: NextRequest,
-  { params }: { params: { id: string } }
+   request: NextRequest, { params }: { params: Promise<{ id : string}> }
 ) {
   try {
-    const raw = await req.json(); // { score: number, observations: string }
+
+    const {id } = await params; 
+    const raw = await request.json(); // { score: number, observations: string }
 
     const revision = await revisionController.register({
-      vehicleId: Number(params.id),
+      vehicleId: Number(id),
       score: Number(raw.score),
       observations: raw.observations
     });

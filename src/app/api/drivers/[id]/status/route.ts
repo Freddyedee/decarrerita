@@ -5,23 +5,19 @@ import { UserContainer } from "@/shared/container/UserContainer";
 import { UpdateDriverStatusRequest } from "@modules/user/application/dto/UpdateDriverStatusRequest";
 
 export async function PATCH(
-    request: NextRequest,
-    {
-        params,
-    }: {
-        params: {
-            id: string;
-        };
-    }
+    request: NextRequest, { params }: { params: Promise<{ id : string}> }
+
 ) {
 
     try {
+
+        const {id} = await params; 
 
         const body = await request.json();
 
         const dto: UpdateDriverStatusRequest = {
 
-            userId: Number(params.id),
+            userId: Number(id),
 
             status: body.status
 

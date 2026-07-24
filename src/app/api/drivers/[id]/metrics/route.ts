@@ -5,15 +5,11 @@ import { UserContainer } from "@/shared/container/UserContainer";
 import { UpdateDriverMetricsRequest } from "@modules/user/application/dto/UpdateDriverMetricsRequest";
 
 export async function PATCH(
-    request: NextRequest,
-    {
-        params,
-    }: {
-        params: {
-            id: string;
-        };
-    }
+    request: NextRequest, { params }: { params: Promise<{ id : string}> }
+
 ) {
+
+    const { id } = await params; 
 
     try {
 
@@ -21,7 +17,7 @@ export async function PATCH(
 
         const dto: UpdateDriverMetricsRequest = {
 
-            userId: Number(params.id),
+            userId: Number(id),
 
             averageRating: body.averageRating,
 

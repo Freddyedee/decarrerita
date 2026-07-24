@@ -3,14 +3,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { UserContainer } from "@/shared/container/UserContainer";
 
 export async function GET(
-    request: NextRequest,
-    { params }: { params: { id: string } }
+    request: NextRequest, { params }: { params: Promise<{ id : string}> }
 ) {
+
+    const { id } = await params; 
 
     try {
 
         const response =
-            await UserContainer.clientController.getById(Number(params.id));
+            await UserContainer.clientController.getById(Number(id));
 
         return NextResponse.json(
             { message: "Client retrieved successfully", data: response },

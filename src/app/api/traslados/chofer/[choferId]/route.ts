@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { trasladoController } from "@/modules/Traslado/presentation/traslado.modules";
 
-export async function GET(req: NextRequest, { params }: { params: { choferId: string } }) {
+export async function GET(
+  request: NextRequest, { params }: { params: Promise<{ choferId : string}> }
+
+) {
   try {
-    const traslados = await trasladoController.getByChofer(Number(params.choferId));
+
+    const { choferId} = await params; 
+
+    const traslados = await trasladoController.getByChofer(Number(choferId));
     return NextResponse.json({ message: "Historial retrieved successfully", data: traslados }, { status: 200 });
   } catch (error) {
     return NextResponse.json(

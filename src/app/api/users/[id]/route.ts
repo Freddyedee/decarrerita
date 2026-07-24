@@ -10,13 +10,14 @@ interface RouteParams {
 }
 
 export async function GET(
-    request: NextRequest,
-    { params }: RouteParams
+    request: NextRequest, { params }: { params: Promise<{ idParams : string}> }
 ) {
 
     try {
 
-        const id = Number(params.id);
+      const { idParams } =await params; 
+
+        const id = Number(idParams);
 
         const response =
             await UserContainer.userController.getUserById(id);

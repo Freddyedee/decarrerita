@@ -5,22 +5,17 @@ import { UserContainer } from "@/shared/container/UserContainer";
 import { UpdateUserProfileRequest } from "@modules/user/application/dto/UpdateUserProfileRequest";
 
 export async function PATCH(
-    request: NextRequest,
-    {
-        params,
-    }: {
-        params: {
-            id: string;
-        };
-    }
+   request: NextRequest, { params }: { params: Promise<{ id : string}> }
 ) {
     try {
+
+        const {id} = await params; 
 
         const body = await request.json();
 
         const dto: UpdateUserProfileRequest = {
 
-            userId: Number(params.id),
+            userId: Number(id),
 
             firstName: body.firstName,
 
