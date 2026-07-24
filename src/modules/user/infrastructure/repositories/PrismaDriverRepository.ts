@@ -94,4 +94,15 @@ export class PrismaDriverRepository implements IDriverRepository {
             data: { estado_aprobacion: status }
         });
     }
+
+    async updateAvailability(driverUserId: number, isAvailable: boolean): Promise<void> {
+        await this.prisma.chofer.update({
+            where: {
+                id_usuario: driverUserId
+            },
+            data: {
+                disponible: isAvailable
+            }
+        });
+    }
 }

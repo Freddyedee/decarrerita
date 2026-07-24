@@ -4,8 +4,17 @@ import { ApprovalStatus } from "../../domain/enums/ApprovalStatus";
 import { Prisma } from "@prisma/client";
 
 export interface IDriverRepository {
+
     findByUserId(userId: number): Promise<Driver | null>;
 
+    update(driver: Driver, tx?: Prisma.TransactionClient): Promise<Driver>;
+
+    findPuntajeByChoferId(id: number): Promise<number>;
+
+    updateStatus(driverUserId: number, status: string): Promise<void>;
+
+    updateAvailability(driverUserId: number, isAvailable: boolean): Promise<void>;
+    
     create(
         userId: number,
         licenseNumber: DriverLicense,
@@ -14,9 +23,4 @@ export interface IDriverRepository {
         tx?: Prisma.TransactionClient
     ): Promise<Driver>;
 
-    update(driver: Driver, tx?: Prisma.TransactionClient): Promise<Driver>;
-
-    findPuntajeByChoferId(id: number): Promise<number>;
-
-    updateStatus(driverUserId: number, status: string): Promise<void>;
 }

@@ -13,28 +13,38 @@ export class PrismaEmergencyContactRepository implements IEmergencyContactReposi
     ) {}
 
     async create(contact: EmergencyContact): Promise<EmergencyContact> {
-
-        const created = await this.prisma.contacto_emergencia.create({
-
-            data: {
-
-                id_chofer: contact.driverUserId,
-
-                nombre_contacto: contact.getContactName().getValue(),
-
-                parentesco: contact.getRelationship(),
-
-                telefono_contacto: contact.getPhone().getValue(),
-
-                activo: contact.estaActivo()
-
-            }
-
+    try {
+        // 1. Verificamos qué datos exactos están a punto de enviarse a Prisma
+        console.log("🟡 [PRISMA] Intentando guardar contacto. Payload:", {
+            id_chofer: contact.driverUserId,
+            nombre_contacto: contact.getContactName().getValue(),
+            parentesco: contact.getRelationship(),
+            telefono_contacto: contact.getPhone().getValue(),
+            activo: contact.estaActivo()
         });
 
+        const created = await this.prisma.contacto_emergencia.create({
+            data: {
+                id_chofer: contact.driverUserId,
+                nombre_contacto: contact.getContactName().getValue(),
+                parentesco: contact.getRelationship(),
+                telefono_contacto: contact.getPhone().getValue(),
+                activo: contact.estaActivo()
+            }
+        });
+
+        // 2. Confirmamos si Prisma logró responder
+        console.log("🟢 [PRISMA] Guardado exitoso:", created);
         return this.toDomain(created);
 
+    } catch (error: any) {
+        // 3. Atrapamos el error exacto de Prisma o de la Base de Datos
+        console.error("❌ [PRISMA ERROR] Fallo al insertar en la BD:", error.message || error);
+        
+        // Es vital relanzar el error para que llegue a la Ruta API y devuelva un 500 al frontend
+        throw error; 
     }
+}
 
     async findByDriverUserId(driverUserId: number): Promise<EmergencyContact[]> {
 
