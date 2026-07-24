@@ -2,30 +2,63 @@
 
 import { getCurrentRole } from "@/shared/auth/userCurrentRole";
 import { redirect } from "next/navigation";
+import Sidebar from "@/components/cliente/Sidebar";
+import ClientHeader from "@/components/cliente/Header";
+import { UserContainer } from "@/shared/container/UserContainer";
 
-export default async function ClienteLayout({ children }: { children: React.ReactNode }) {
+/**
+ * Layout compartido por todas las pantallas del cliente.
+ * GUARD DE ROL: Verifica permisos en el servidor antes de renderizar.
+ */
+export default async function ClienteLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const sesion = await getCurrentRole();
 
-    const sesion = await getCurrentRole();
+  // 1. Validar que la sesión exista y que sea un CLIENTE
+  if (!sesion || sesion.rol !== "CLIENTE") {
+    redirect("/login");
+  }
 
-    if (!sesion || sesion.rol !== "CLIENTE") {
-        redirect("/login");
-    }
+  // 2. Obtener los datos actualizados del usuario
+  const usuarioInput = await UserContainer.getUserByIdUseCase.execute(sesion.usuarioId);
 
-    return (
-        <div className="flex min-h-screen bg-[#F4F5F7] text-[#12131A]">
-            <aside className="w-60 shrink-0 bg-white border-r border-[#E2E4E9] flex flex-col">
-                <div className="px-6 py-8 border-b border-[#E2E4E9]">
-                    <p className="text-lg font-bold tracking-tight">Decarrerita</p>
-                    <p className="text-xs text-[#12131A]/40 mt-1 font-mono">panel cliente</p>
-                </div>
-                <nav className="flex flex-col gap-1 px-3 py-4 text-sm">
-                    <a href="/dashboard" className="px-3 py-2 rounded-lg text-[#12131A]/70 hover:bg-[#F4F5F7] transition-colors">Inicio</a>
-                    <a href="/solicitar" className="px-3 py-2 rounded-lg text-[#12131A]/70 hover:bg-[#F4F5F7] transition-colors">Solicitar viaje</a>
-                    <a href="/traslados" className="px-3 py-2 rounded-lg text-[#12131A]/70 hover:bg-[#F4F5F7] transition-colors">Mis viajes</a>
-                    <a href="/recargas" className="px-3 py-2 rounded-lg text-[#12131A]/70 hover:bg-[#F4F5F7] transition-colors">Recargar saldo</a>
-                </nav>
-            </aside>
-            <main className="flex-1 px-10 py-8">{children}</main>
-        </div>
-    );
+  if (!usuarioInput) {
+    redirect("/login");
+  }
+
+  const userHeaderData = {
+    fullName: `${usuarioInput.firstName} ${usuarioInput.lastName}`,
+    role: "Cliente",
+  };
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-900">
+      
+      {/* SIDEBAR (Mismo estilo que AdminSidebar) */}
+      <aside className="hidden md:flex md:w-64 md:flex-col border-r border-[#E2E4E9] bg-white shrink-0">
+        <Sidebar />
+      </aside>
+
+      {/* CONTENEDOR PRINCIPAL */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        
+        {/* CABECERA DE CLIENTE */}
+        <ClientHeader 
+          fullName={userHeaderData.fullName} 
+          role={userHeaderData.role} 
+        />
+
+        {/* CONTENIDO SCROLLABLE (Estilo idéntico a layoutadmin) */}
+        <main className="flex-1 overflow-y-auto px-10 py-8">
+          <div className="mx-auto max-w-6xl">
+            {children}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
 }
