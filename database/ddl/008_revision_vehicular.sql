@@ -13,3 +13,5 @@ CREATE TABLE revision_vehicular (
 	REFERENCES vehiculo(id_vehiculo) 
 	ON DELETE CASCADE
 );
+
+SELECT * FROM revision_vehicular;

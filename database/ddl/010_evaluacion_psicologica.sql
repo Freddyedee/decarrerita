@@ -13,3 +13,5 @@ CREATE TABLE evaluacion_psicologica (
 	REFERENCES chofer(id_usuario) 
 	ON DELETE CASCADE
 ); 
+
+SELECT * FROM evaluacion_psicologica;

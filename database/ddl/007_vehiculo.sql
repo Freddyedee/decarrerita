@@ -14,3 +14,6 @@ CREATE TABLE vehiculo (
     CONSTRAINT fk_vehiculo_marca FOREIGN KEY (id_marca) REFERENCES marca(id_marca),
     CONSTRAINT fk_vehiculo_chofer FOREIGN KEY (id_chofer) REFERENCES chofer(id_usuario) ON DELETE CASCADE
 );
+
+
+SELECT * FROM vehiculo;

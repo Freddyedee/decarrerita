@@ -16,6 +16,12 @@ export interface IDriverRepository {
     updateAvailability(driverUserId: number, isAvailable: boolean): Promise<void>;
 
     findAvailableAndAptDrivers(): Promise<any[]>;
+
+    // Para saber si ya tiene un carro listo
+    hasApprovedVehicle(driverUserId: number): Promise<boolean>;
+
+    // Para cuando el Admin apruebe el carro y queramos saber si ya pasó psicología
+    hasPassedPsychologicalTest(driverUserId: number): Promise<boolean>;
     
     create(
         userId: number,

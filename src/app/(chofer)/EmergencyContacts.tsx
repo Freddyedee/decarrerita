@@ -1,219 +1,77 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Phone, User, Users, Plus, Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Phone, Plus, Loader2 } from "lucide-react";
 
-interface Contacto {
-  id: number;
-  contactName: string;
-  relationship: string;
-  phone: string;
-  active: boolean;
-}
+interface Contacto { id: number; contactName: string; relationship: string; phone: string; }
 
 export default function ContactosEmergenciaPanel({ choferId }: { choferId: number }) {
-  const router = useRouter();
   const [contactos, setContactos] = useState<Contacto[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
-  // Estados del formulario para el DTO
-  const [contactName, setContactName] = useState("");
-  const [relationship, setRelationship] = useState("");
-  const [phone, setPhone] = useState("");
+  const [nombre, setNombre] = useState(""); const [relacion, setRelationship] = useState(""); const [telefono, setPhone] = useState("");
 
-  const fetchContactos = async () => {
-  try {
-    // 1. Añadimos cache: 'no-store' y un timestamp para forzar una petición fresca
-    const res = await fetch(`/api/drivers/${choferId}/emergencyContact?t=${Date.now()}`, {
-      cache: 'no-store'
-    });
-    
-    const json = await res.json();
-    
-    // Validamos si tu backend devuelve el array directamente o dentro de un objeto 'data'
-    if (json.data) {
-      setContactos(json.data);
-    } else if (Array.isArray(json)) {
-      setContactos(json); // Por si tu GET devuelve el array plano
-    }
-  } catch (error) {
-    console.error("Error cargando contactos:", error);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  const cargarContactos = async () => {
+    try {
+      const res = await fetch(`/api/drivers/${choferId}/emergencyContact?t=${Date.now()}`, { cache: 'no-store' });
+      const data = await res.json();
+      setContactos(Array.isArray(data) ? data : (data.data || []));
+    } finally { setLoading(false); }
+  };
 
-  useEffect(() => {
-    fetchContactos();
-  }, [choferId]);
+  useEffect(() => { cargarContactos(); }, [choferId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setIsSubmitting(true);
-
-  try {
-    const res = await fetch(`/api/drivers/${choferId}/emergencyContact`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contactName, relationship, phone }),
-    });
-
-    const textResponse = await res.text();
-    let json;
-    
+    e.preventDefault(); setSubmitting(true);
     try {
-      json = JSON.parse(textResponse);
-    } catch (parseError) {
-      throw new Error("El servidor no devolvió un JSON válido.");
-    }
-
-    if (!res.ok || json.success === false) {
-      throw new Error(json.message || "El servidor rechazó los datos.");
-    }
-
-    alert("¡Contacto agregado con éxito!");
-    
-    // 2. ACTUALIZACIÓN INSTANTÁNEA DE LA UI
-    // Inyectamos el nuevo contacto devuelto por el servidor directamente a la lista
-    if (json.data) {
-      setContactos((prevContactos) => [...prevContactos, json.data]);
-    } else {
-      // Como respaldo, llamamos a la API fresca
-      fetchContactos(); 
-    }
-
-    // Limpiamos los inputs
-    setContactName("");
-    setRelationship("");
-    setPhone("");
-    
-    router.refresh(); // Actualiza el layout de Next.js
-    
-  } catch (error: any) {
-    alert(" Error al registrar: " + error.message);
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
-  if (isLoading) return <div className="flex justify-center p-6"><Loader2 className="animate-spin text-blue-500" /></div>;
-
-  // Regla de Negocio: Mínimo 2 contactos
-  const faltanContactos = contactos.length < 2;
+      const res = await fetch(`/api/drivers/${choferId}/emergencyContact`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contactName: nombre, relationship: relacion, phone: telefono }),
+      });
+      if (!res.ok) throw new Error("Error al agregar contacto");
+      setShowForm(false); setNombre(""); setRelationship(""); setPhone("");
+      cargarContactos();
+    } catch (err: any) { alert(err.message); }
+    finally { setSubmitting(false); }
+  };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-      <div className="bg-gray-50 border-b border-gray-100 p-6 flex justify-between items-center">
-        <div>
-          <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-            <Phone className="w-5 h-5 text-blue-600" />
-            Contactos de Emergencia
-          </h2>
-          <p className="text-sm text-gray-500 mt-1">
-            Requeridos: Mínimo 2 (Llevas {contactos.length})
-          </p>
-        </div>
-        {faltanContactos ? (
-          <span className="px-3 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-full border border-amber-200">
-            Incompleto
-          </span>
-        ) : (
-          <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full border border-green-200">
-            Completado
-          </span>
-        )}
+    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6">
+      <div className="flex justify-between items-center border-b pb-4">
+        <h3 className="font-bold text-slate-900 flex items-center gap-2"><Phone className="w-5 h-5 text-rose-600" /> Contactos de Emergencia</h3>
+        <button onClick={() => setShowForm(!showForm)} className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1">
+          <Plus className="w-4 h-4 text-rose-600" /> {showForm ? "Cerrar" : "Añadir Contacto"}
+        </button>
       </div>
 
-      <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Formulario */}
-        <div>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-4 w-4 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  required
-                  value={contactName}
-                  onChange={(e) => setContactName(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-xl focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  placeholder="Ej. María Pérez"
-                />
+      {showForm && (
+        <form onSubmit={handleSubmit} className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4 text-left">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <div><label className="font-bold">Nombre Completo</label><input required value={nombre} onChange={e => setNombre(e.target.value)} placeholder="María Pérez" className="w-full p-2 border rounded-lg mt-1" /></div>
+            <div><label className="font-bold">Parentesco</label><input required value={relacion} onChange={e => setRelationship(e.target.value)} placeholder="Madre / Esposa" className="w-full p-2 border rounded-lg mt-1" /></div>
+            <div><label className="font-bold">Teléfono</label><input required value={telefono} onChange={e => setPhone(e.target.value)} placeholder="0414-1234567" className="w-full p-2 border rounded-lg mt-1" /></div>
+          </div>
+          <button disabled={submitting} type="submit" className="w-full bg-rose-600 text-white font-bold py-2.5 rounded-lg text-xs flex justify-center">
+            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Guardar Contacto"}
+          </button>
+        </form>
+      )}
+
+      {loading ? <p className="text-xs text-slate-400">Cargando contactos...</p> : (
+        <div className="space-y-3">
+          {contactos.map(c => (
+            <div key={c.id} className="p-3.5 bg-slate-50 border rounded-xl flex justify-between items-center text-left">
+              <div>
+                <p className="font-bold text-sm text-slate-800">{c.contactName}</p>
+                <p className="text-xs text-slate-500">{c.relationship} • font-mono: {c.phone}</p>
               </div>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Parentesco</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Users className="h-4 w-4 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  required
-                  value={relationship}
-                  onChange={(e) => setRelationship(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-xl focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  placeholder="Ej. Madre, Esposo"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Phone className="h-4 w-4 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  required
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-xl focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  placeholder="Ej. 0414-1234567"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-70 transition-colors"
-            >
-              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-              Agregar Contacto
-            </button>
-          </form>
+          ))}
+          {contactos.length === 0 && <p className="text-xs text-slate-400 italic text-center py-4">No has registrado contactos de emergencia.</p>}
         </div>
-
-        {/* Lista de Contactos Agregados */}
-        <div>
-          <h3 className="text-sm font-bold text-gray-800 mb-4 border-b pb-2">Contactos Registrados</h3>
-          {contactos.length === 0 ? (
-            <p className="text-sm text-gray-500 italic text-center mt-10">Aún no has registrado ningún contacto.</p>
-          ) : (
-            <ul className="space-y-3">
-              {contactos.map((contacto) => (
-                <li key={contacto.id} className="bg-gray-50 p-3 rounded-xl border border-gray-200 flex justify-between items-center">
-                  <div>
-                    <p className="font-bold text-gray-800 text-sm">{contacto.contactName}</p>
-                    <p className="text-xs text-gray-500">{contacto.relationship}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-blue-600">{contacto.phone}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
+      )}
     </div>
   );
 }

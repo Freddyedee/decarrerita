@@ -22,6 +22,58 @@ export class PrismaDriverRepository implements IDriverRepository {
         return this.toDomain(driver);
     }
 
+    // En PrismaDriverRepository.ts
+async hasApprovedVehicle(driverUserId: number): Promise<boolean> {
+        // 1. Consultamos los vehículos del chofer e incluimos su última revisión vehicular
+        const vehiculos = await this.prisma.vehiculo.findMany({
+            where: { id_chofer: driverUserId },
+            include: {
+                revision_vehicular: {
+                    orderBy: { fecha_revision: 'desc' },
+                    take: 1
+                }
+            }
+        });
+
+        console.log(`🚙 [DEBUG hasApprovedVehicle] Total de vehículos para Chofer ID ${driverUserId}: ${vehiculos.length}`);
+
+        // 2. Un vehículo se considera APROBADO si su estado es 'activo'/'aprobado'
+        //    O SI tiene una revisión en la tabla 'revision_vehicular' con nota >= 65
+        const tieneAprobado = vehiculos.some(v => {
+            const estadoReal = (v.estado || "").trim().toLowerCase();
+            const esEstadoActivo = estadoReal === "activo" || estadoReal === "aprobado" || estadoReal === "inactivo";
+
+            const ultimaRevision = v.revision_vehicular[0];
+            const tieneRevisionAprobada = ultimaRevision ? (ultimaRevision.calificacion >= 65) : false;
+
+            console.log(`   -> Vehículo Placa [${v.placa}]: estado="${v.estado}" | Última nota revisión=${ultimaRevision ? ultimaRevision.calificacion : 'Sin revisión'}`);
+
+            return esEstadoActivo || tieneRevisionAprobada;
+        });
+
+        console.log(`🎯 [DEBUG] ¿Resultado final de la validación de vehículo?: ${tieneAprobado ? 'SÍ (true)' : 'NO (false)'}`);
+
+        return tieneAprobado;
+    }
+
+    // 2. IMPLEMENTACIÓN DE PRUEBA PSICOLÓGICA APROBADA
+    async hasPassedPsychologicalTest(driverUserId: number): Promise<boolean> {
+        const count = await this.prisma.evaluacion_psicologica.count({
+            where: {
+                id_chofer: driverUserId,
+                OR: [
+                    { calificacion: { gte: 73 } },
+                    { resultado: "APROBADO" },
+                    { resultado: "APROBADA" },
+                    { resultado: "aprobado" },
+                    { resultado: "aprobada" }
+                ]
+            }
+        });
+
+        return count > 0; // Devuelve true si tiene al menos una evaluación con nota >= 73
+    }
+
     /**
      * RN-026/RN-027: crea la fila `chofer` dentro de la misma transacción.
      */
@@ -112,7 +164,47 @@ export class PrismaDriverRepository implements IDriverRepository {
      * - Nota psicológica >= 73 (y no vencida)
      * - Nota revisión vehicular >= 65 (y no vencida)
      */
+    /**
+     * Busca todos los choferes disponibles con auditoría de Logs
+     */
     async findAvailableAndAptDrivers(): Promise<any[]> {
+        console.log("\n--------------------------------------------------");
+        console.log("🚨 [DEBUG SOLICITUD TRASLADO] Escaneando choferes en tiempo real...");
+
+        // 1. AUDITORÍA: ¿Quiénes tienen disponible = true en este segundo?
+        const choferesOnline = await this.prisma.$queryRaw`
+            SELECT c.id_usuario, c.disponible, c.estado_aprobacion, u.nombre
+            FROM chofer c
+            INNER JOIN usuario u ON c.id_usuario = u.id_usuario
+            WHERE c.disponible = true;
+        `;
+        console.log("📡 1. Choferes con disponible=true:", JSON.stringify(choferesOnline, null, 2));
+
+        // 2. AUDITORÍA: ¿Qué vehículos existen y cuál es su estado exacto en BD?
+        const detalleVehiculos = await this.prisma.$queryRaw`
+            SELECT v.id_vehiculo, v.id_chofer, v.placa, v.estado AS estado_vehiculo, 
+                   ur.calificacion AS nota_vehicular, ur.fecha_vencimiento AS vence_vehicular
+            FROM vehiculo v
+            LEFT JOIN (
+                SELECT id_vehiculo, calificacion, fecha_vencimiento,
+                       ROW_NUMBER() OVER(PARTITION BY id_vehiculo ORDER BY fecha_revision DESC) as rn
+                FROM revision_vehicular
+            ) ur ON v.id_vehiculo = ur.id_vehiculo AND ur.rn = 1;
+        `;
+        console.log("🚗 2. Estado de todos los vehículos y sus revisiones:", JSON.stringify(detalleVehiculos, null, 2));
+
+        // 3. AUDITORÍA: ¿Cuál es la última nota psicológica de cada chofer?
+        const detallePsico = await this.prisma.$queryRaw`
+            SELECT ue.id_chofer, ue.calificacion AS nota_psicologica, ue.fecha_vencimiento AS vence_psicologica
+            FROM (
+                SELECT id_chofer, calificacion, fecha_vencimiento,
+                       ROW_NUMBER() OVER(PARTITION BY id_chofer ORDER BY fecha_evaluacion DESC) as rn
+                FROM evaluacion_psicologica
+            ) ue WHERE rn = 1;
+        `;
+        console.log("🧠 3. Última evaluación psicológica por chofer:", JSON.stringify(detallePsico, null, 2));
+
+        // 4. EJECUCIÓN DE TU CONSULTA REAL ESTRICTA
         const choferesAptos = await this.prisma.$queryRaw`
             WITH ultima_evaluacion AS (
                 SELECT id_chofer, calificacion, fecha_vencimiento
@@ -153,13 +245,16 @@ export class PrismaDriverRepository implements IDriverRepository {
             INNER JOIN ultima_evaluacion ue ON c.id_usuario = ue.id_chofer
             INNER JOIN ultima_revision ur ON v.id_vehiculo = ur.id_vehiculo
             WHERE c.disponible = true
-              AND c.estado_aprobacion = 'APROBADO'
+              AND c.estado_aprobacion = 'aprobado'
               AND v.estado = 'activo'
               AND ue.calificacion >= 73
               AND ue.fecha_vencimiento >= CURRENT_DATE
               AND ur.calificacion >= 65
               AND ur.fecha_vencimiento >= CURRENT_DATE;
         `;
+
+        console.log("🎯 4. RESULTADO DE TU CONSULTA ESTRICTA:", JSON.stringify(choferesAptos, null, 2));
+        console.log("--------------------------------------------------\n");
 
         return choferesAptos as any[];
     }
