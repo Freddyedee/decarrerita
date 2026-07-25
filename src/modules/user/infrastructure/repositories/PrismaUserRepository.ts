@@ -74,8 +74,16 @@ export class PrismaUserRepository implements IUserRepository {
 
                 estado: user.getStatus(),
 
-                fecha_creacion: user.createdAt
+                fecha_creacion: user.createdAt,
+
+                //  La magia para el Ledger: Creación anidada de la Wallet
+                    // Vercel compilará esto sin problemas porque es nativo de Prisma.
+                    // Al pasar un objeto vacío {}, Prisma toma los @default de tu base de datos
+                    wallet: {
+                        create: {}
+                    }
             }
+
 
         });
 
