@@ -1,39 +1,37 @@
+import { prisma } from "@/shared/lib/prisma";
 import { PagosClient, RetiroAdminDTO } from "./PagosClient";
 
 export const dynamic = 'force-dynamic';
 
 export default async function PagosAdminPage() {
-  let retiros: RetiroAdminDTO[] = [];
+  const rawRetiros = await prisma.solicitud_retiro.findMany({
+    include: {
+      wallet: {
+        include: {
+          usuario: true,
+        },
+      },
+      banco: true,
+    },
+    orderBy: {
+      fecha_solicitud: "desc",
+    },
+  });
 
-  try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
-    const response = await fetch(`${apiUrl}/api/admin/retiros`, {
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      throw new Error("Error al obtener retiros");
-    }
-
-    const rawRetiros = await response.json();
-
-    retiros = rawRetiros.map((r: any) => ({
-      id: r.id_retiro,
-      chofertNombre: `${r.wallet.usuario.nombre} ${r.wallet.usuario.apellido}`,
-      choferEmail: r.wallet.usuario.email,
-      bancoNombre: r.banco.nombre_banco,
-      monto: Number(r.monto),
-      numeroCuenta: r.numero_cuenta,
-      titularCuenta: r.titular_cuenta,
-      estado: r.estado,
-      fechaSolicitud: new Intl.DateTimeFormat("es-VE", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      }).format(new Date(r.fecha_solicitud)),
-    }));
-  } catch (error) {
-    console.error("Error cargando retiros:", error);
-  }
+  const retiros: RetiroAdminDTO[] = rawRetiros.map((r) => ({
+    id: r.id_retiro,
+    chofertNombre: `${r.wallet.usuario.nombre} ${r.wallet.usuario.apellido}`,
+    choferEmail: r.wallet.usuario.email,
+    bancoNombre: r.banco.nombre_banco,
+    monto: Number(r.monto),
+    numeroCuenta: r.numero_cuenta,
+    titularCuenta: r.titular_cuenta,
+    estado: r.estado,
+    fechaSolicitud: new Intl.DateTimeFormat("es-VE", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(new Date(r.fecha_solicitud)),
+  }));
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
