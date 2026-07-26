@@ -40,4 +40,5 @@ ALTER TABLE traslado ADD CONSTRAINT traslado_estado_actual_check
     'EN_CAMINO'
   ));
 
+
   select * FROM traslado; 

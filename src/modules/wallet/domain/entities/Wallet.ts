@@ -114,6 +114,20 @@ export class Wallet {
     }
         
 
+    congelar(monto: number): void {
+        if (monto <= 0) {
+            throw new Error("El monto a congelar debe ser mayor a cero.");
+        }
+        // Le sumamos el monto al saldo congelado en memoria
+        this.saldoCongelado = Number(this.saldoCongelado) + Number(monto);
+    }
+
+    descongelar(monto: number): void {
+        if (Number(this.saldoCongelado) < monto) {
+            throw new Error("No se puede descongelar más del saldo retenido actual.");
+        }
+        this.saldoCongelado = Number(this.saldoCongelado) - Number(monto);
+    }
 
 
 

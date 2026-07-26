@@ -47,32 +47,38 @@ export class WalletRepository implements IWalletRepository {
 
     ): Promise<Wallet> {
 
-        const client = tx ?? prisma;    // Operador de coalescencia nula. Este le dice al repository "si me proporcionaron una transsaccion tx usula
-                                        // caso contrario null o undefined, usa el cliente de prisma por defecto" 
+        console.log(`⚙️ [WALLET REPO] Preparando transacción en BD para Wallet ID: ${wallet.id} | Tipo: "${tipoMovimiento}"`);
+        
+        const client = tx ?? prisma;
 
-        console.log("=== UPDATE WITH MOVEMENT ===");
-        console.log("wallet.id:", wallet.id);
-        console.log("wallet.saldoDisponible que se va a persistir:", wallet.saldoDisponible);
+        try {
+            console.log(`⚙️ [WALLET REPO] 1/2 Actualizando saldo en tabla 'wallet'... Nuevo saldo: ${wallet.saldoDisponible}`);
+            await client.wallet.update({
+                where: { id_wallet: wallet.id },
+                data: {
+                    saldo_disponible: wallet.saldoDisponible,
+                    saldo_congelado: wallet.saldoCongelado,
+                },
+            });
 
-        const updated = await client.wallet.update({
-            where: { id_wallet: wallet.id}, 
-            data: {saldo_disponible: wallet.saldoDisponible}
-        })
-
-        console.log("valor que Postgres devolvió tras el update:", updated.saldo_disponible);
-
-
-        await client.movimiento_wallet.create({
-
-            data: {
-                id_wallet: wallet.id, id_traslado: trasladoId, 
-                tipo_movimiento: tipoMovimiento, monto, 
-                saldo_anterior: saldoAnterior, saldo_posterior: wallet.saldoDisponible,
-                descripcion
-            }
-        }); 
-    
-        return walletMapper.toDomain(updated);
+            console.log(`⚙️ [WALLET REPO] 2/2 Insertando en 'movimiento_wallet'...`);
+            const nuevoMovimiento = await client.movimiento_wallet.create({
+                data: {
+                    id_wallet: wallet.id,
+                    id_traslado: trasladoId ?? null,
+                    tipo_movimiento: tipoMovimiento,
+                    monto: monto,
+                    saldo_anterior: saldoAnterior,
+                    saldo_posterior: wallet.saldoDisponible,
+                    descripcion: descripcion ?? `Movimiento ${tipoMovimiento}`,
+                },
+            });
+            console.log(`🚀 [WALLET REPO] ¡ÉXITO! Movimiento creado con ID: ${nuevoMovimiento.id_movimiento}`);
+        } catch (error) {
+            console.error(`❌ [WALLET REPO - ERROR FATAL] Falló la transacción en Prisma al guardar el movimiento:`, error);
+            throw error; // Lanzar el error es vital para que el TransactionManager haga rollback
+        }
+        return wallet;
     }
 
     /**

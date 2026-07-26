@@ -15,3 +15,7 @@ CREATE TABLE chofer (
 );
 
 SELECT * FROM chofer;
+
+UPDATE chofer 
+SET disponible = 'false' 
+WHERE estado_aprobacion != 'true';

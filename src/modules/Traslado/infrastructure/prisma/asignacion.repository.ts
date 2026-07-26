@@ -76,14 +76,18 @@ export class AsignacionRepository implements IAsignacionRepository{
     }
 
     async cerrarOfertasRestantes(trasladoId: number, asignacionGanadoraId: number): Promise<void> {
-        await prisma.asignacion_chofer.updateMany({
-            where: {
-                id_traslado: trasladoId,
-                id_asignacion: { not: asignacionGanadoraId },
-                estado_respuesta: EstadoRespuesta.PENDIENTE
+    await prisma.asignacion_chofer.updateMany({
+        where: {
+            id_traslado: trasladoId,
+            id_asignacion: {
+                not: asignacionGanadoraId // Excluimos la que acaba de ganar
             },
-            data: { estado_respuesta: EstadoRespuesta.RECHAZADO }
-        });
-    }
+            estado_respuesta: "PENDIENTE" // Solo tocamos las que seguían esperando
+        },
+        data: {
+            estado_respuesta: "EXPIRADO"
+        }
+    });
+}
 
 }

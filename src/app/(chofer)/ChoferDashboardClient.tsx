@@ -8,6 +8,8 @@ import {
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+
+
 interface Vehiculo {
   id: number;
   plate: string;
@@ -66,7 +68,7 @@ export default function ChoferDashboardClient({
     if (!isAvailable || viajeActivo) return;
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/traslados/chofer/${choferId}/pendiente`, { cache: "no-store" });
+        const res = await fetch(`/api/drivers/${choferId}/pendiente`);
         if (res.ok) {
           const body = await res.json();
           setOferta(body.data || null);
@@ -162,7 +164,7 @@ export default function ChoferDashboardClient({
     if (!viajeActivo) return;
     setProcesandoAccion(true);
     try {
-      await fetch(`/api/traslados/${viajeActivo.trasladoId}/inciar`, {
+      await fetch(`/api/traslados/${viajeActivo.trasladoId}/iniciar`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ trasladoId: viajeActivo.trasladoId }),
       });

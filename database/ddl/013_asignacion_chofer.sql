@@ -9,3 +9,9 @@ CREATE TABLE asignacion_chofer (
 	CONSTRAINT fk_asignacion_traslado FOREIGN KEY (id_traslado) REFERENCES traslado(id_traslado) ON DELETE CASCADE,
     CONSTRAINT fk_asignacion_chofer FOREIGN KEY (id_chofer) REFERENCES chofer(id_usuario) ON DELETE CASCADE
 );
+
+SELECT * FROM asignacion_chofer;
+
+UPDATE asignacion_chofer 
+SET estado_respuesta = 'EXPIRADO' 
+WHERE estado_respuesta = 'PENDIENTE';

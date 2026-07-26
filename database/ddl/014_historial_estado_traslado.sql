@@ -12,3 +12,5 @@ CREATE TABLE historial_estado_traslado (
     REFERENCES traslado(id_traslado) 
     ON DELETE CASCADE
 ); 
+
+SELECT * FROM historial_estado_traslado;

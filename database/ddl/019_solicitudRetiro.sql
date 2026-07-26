@@ -22,3 +22,5 @@ CREATE TABLE solicitud_retiro (
     FOREIGN KEY (id_banco) 
     REFERENCES banco(id_banco)
 );
+
+SELECT * FROM solicitud_retiro;

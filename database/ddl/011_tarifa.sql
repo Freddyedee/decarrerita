@@ -7,3 +7,7 @@ CREATE TABLE tarifa (
     fecha_inicio_vigencia TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     fecha_fin_vigencia TIMESTAMP DEFAULT NULL
 );
+
+SELECT * FROM tarifa;   
+
+UPDATE tarifa SET porcentaje_comision = 30;

@@ -6,6 +6,8 @@ CREATE TABLE configuracion_sistema (
     fecha_actualizacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ); 
 
+SELECT * FROM configuracion_sistema;
+
 select * from traslado; 
 SELECT * FROM movimiento_wallet;
 
@@ -42,12 +44,17 @@ select * from banco;
 
 INSERT INTO usuario (id_rol, nombre, apellido, email, telefono, password_hash, estado)
 VALUES (
-    (SELECT id_rol FROM rol WHERE nombre = 'Chofer'), 
-    'Chofer', 
-    'Principal', 
-    'chofer@decarrerita.com', 
-    '04148761470', 
-    '$2b$10$GkTtWsRjKgrpGngkigI.eepWcHCfkzDAUUzraijFGb.XE3.3b6lA2', -- Ej: '$2b$10$w8T.N0b3...'
+    (SELECT id_rol FROM rol WHERE nombre = 'Administrador'), 
+    'Tesorería', 
+    'Decarrerita', 
+    'sistema@decarrerita.com', 
+    '0000000000', 
+    'SISTEMA_NO_LOGEABLE_ACCESO_DENEGADO', -- Ej: '$2b$10$w8T.N0b3...'
     'activo'
 );
 
+
+
+INSERT INTO configuracion_sistema (nombre, valor, descripcion)
+VALUES
+    ('id_usuario_empresa', '19', 'ID del usuario que representa a la empresa en el sistema.');

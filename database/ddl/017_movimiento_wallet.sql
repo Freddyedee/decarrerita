@@ -21,3 +21,5 @@ CREATE TABLE movimiento_wallet (
     FOREIGN KEY (id_traslado) 
     REFERENCES traslado(id_traslado)
 ); 
+
+SELECT * FROM movimiento_wallet;
