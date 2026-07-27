@@ -1,535 +1,345 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Loader2, Users, UserCog, AlertTriangle, Copy, Eye, Pencil, Ban} from "lucide-react";
-import { Button , buttonVariants} from "@/components/ui/button";
+import { 
+  Search, Loader2, Users, UserCog, AlertTriangle, 
+  Copy, Eye, Pencil, Ban, Plus, ShieldCheck, CheckCircle2, XCircle 
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useRouter } from "next/navigation";
 
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuGroup,
-} from "@/components/ui/dropdown-menu";
-
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-
-
-// Definimos la interfaz basada exactamente en tu DTO
 export interface UserResponse {
   user_id: number | null;
-  role: number;
+  role: number; // 1 = ADMIN, 2 = CLIENTE, 3 = CHOFER
   firstName: string;
   lastName: string;
   email: string;
   phone: string;
   status: string;
-  createdAt: string; // Al venir por JSON desde el backend, la fecha llega como string
+  createdAt: string;
 }
 
-
 export function UsuariosClient() {
-  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<UserResponse | null >(null);
-  
-  const [usuarioAEditar, setUsuarioAEditar] = useState<UserResponse | null>(null);
-  const [usuarioASuspender, setUsuarioASuspender] = useState<UserResponse | null>(null);
-
   const [usuarios, setUsuarios] = useState<UserResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const router = useRouter();
 
-  const fetchUsuarios = async () => {
+  // Estados para el Modal de Crear Admin
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [submittingAdmin, setSubmittingAdmin] = useState(false);
+  const [nombre, setNombre] = useState("");
+  const [apellido, setApellido] = useState("");
+  const [email, setEmail] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [password, setPassword] = useState("");
+
+  const cargarUsuarios = async () => {
     try {
-      setIsLoading(true);
-      // Asumimos que tu endpoint principal para listar usuarios es este:
-      const response = await fetch("/api/users");
-      if (response.ok) {
-        const data = await response.json();
-        // Si tu API devuelve { data: [...] }, cambia esto a data.data
-        setUsuarios(data); 
+      setLoading(true);
+      setErrorMsg("");
+      const res = await fetch(`/api/users?t=${Date.now()}`, { cache: "no-store" });
+      
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.message || "Error al obtener la lista de usuarios. Revisa los números de teléfono en la BD.");
       }
-    } catch (error) {
+
+      const data = await res.json();
+      setUsuarios(Array.isArray(data) ? data : data.data || []);
+    } catch (error: any) {
       console.error("Error cargando usuarios:", error);
+      setErrorMsg(error.message);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUsuarios();
+    cargarUsuarios();
   }, []);
 
-  // Filtrado múltiple: Busca por nombre, apellido, correo o teléfono
-  const filteredUsuarios = usuarios.filter((user) => {
-    const searchStr = searchTerm.toLowerCase();
-    const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+  // Crear un Nuevo Administrador
+  const handleCreateAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmittingAdmin(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    try {
+      // Nota: Ajusta los nombres de las propiedades si tu CreateUserDTO espera camelCase o español
+
+      const telefonoLimpio = telefono.replace(/[\s\-\(\)]/g, "");
+      const payload = {
+        firstName: nombre.trim(),
+        lastName: apellido.trim(),
+        email: email.trim().toLowerCase(),
+        phone: telefonoLimpio,
+        passwordHash: password,
+        role: 1,    // 1 representa el rol ADMIN
+      };
+
+      const res = await fetch(`/api/users`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(result.message || result.error || "No se pudo crear el administrador");
+      }
+
+      setSuccessMsg("¡Usuario Administrador creado con éxito!");
+      setShowAdminModal(false);
+      
+      // Limpiar formulario
+      setNombre("");
+      setApellido("");
+      setEmail("");
+      setTelefono("");
+      setPassword("");
+
+      // Recargar tabla
+      await cargarUsuarios();
+    } catch (error: any) {
+      setErrorMsg(error.message);
+    } finally {
+      setSubmittingAdmin(false);
+    }
+  };
+
+  // Filtrado en tiempo real en la tabla
+  const usuariosFiltrados = usuarios.filter((u) => {
+    const term = searchTerm.toLowerCase();
     return (
-      fullName.includes(searchStr) ||
-      user.email.toLowerCase().includes(searchStr) ||
-      user.phone.includes(searchStr)
+      (u.firstName || "").toLowerCase().includes(term) ||
+      (u.lastName || "").toLowerCase().includes(term) ||
+      (u.email || "").toLowerCase().includes(term) ||
+      (u.phone || "").includes(term)
     );
   });
 
-  // Helper para pintar el Rol (Ajusta los números según tu base de datos)
-  const getRoleBadge = (roleId: number) => {
-    switch (roleId) {
-      case 1: // Asumiendo que 1 es Admin
-        return <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200 shadow-none">Admin</Badge>;
-      case 2: // Asumiendo que 2 es Chofer
-        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200 shadow-none">Chofer</Badge>;
-      case 3: // Asumiendo que 3 es Cliente
-        return <Badge className="bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200 shadow-none">Cliente</Badge>;
+  const obtenerBadgeRol = (rol: number) => {
+    switch (rol) {
+      case 1:
+        return <span className="bg-purple-100 text-purple-800 border border-purple-200 px-2.5 py-0.5 rounded-full text-xs font-black">ADMIN</span>;
+      case 2:
+        return <span className="bg-blue-100 text-blue-800 border border-blue-200 px-2.5 py-0.5 rounded-full text-xs font-bold">CLIENTE</span>;
+      case 3:
+        return <span className="bg-teal-100 text-teal-800 border border-teal-200 px-2.5 py-0.5 rounded-full text-xs font-bold">CHOFER</span>;
       default:
-        return <Badge variant="outline">Rol {roleId}</Badge>;
+        return <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full text-xs">Rol #{rol}</span>;
     }
-  };
-
-  // Helper para pintar el Estado (Ajusta los strings según tu base de datos)
-  const getStatusBadge = (status: string) => {
-    const s = status?.toLowerCase() || "";
-    if (s.includes("activo") || s.includes("aprobado")) {
-      return <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200">Activo</Badge>;
-    }
-    if (s.includes("pendiente")) {
-      return <Badge className="bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200">Pendiente</Badge>;
-    }
-    if (s.includes("suspendido") || s.includes("bloqueado")) {
-      return <Badge className="bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200">Suspendido</Badge>;
-    }
-    return <Badge variant="outline">{status}</Badge>;
   };
 
   return (
-    <Card className="mt-6 border-slate-200 shadow-sm overflow-hidden">
-      <CardContent className="p-0">
-        {/* BARRA DE BÚSQUEDA */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 border-b border-slate-100 gap-4 bg-slate-50/50">
-          <div className="relative w-full sm:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Buscar por nombre, correo o teléfono..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
-            />
-          </div>
+    <div className="space-y-6">
+      {/* Barra superior: Buscador y Botón de Crear Admin */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="relative w-full sm:w-80">
+          <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Buscar por nombre, correo o teléfono..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0E7C86]"
+          />
         </div>
 
-        {/* TABLA DE USUARIOS */}
-        <div className="relative w-full overflow-auto min-h-[300px]">
-          <Table>
-            <TableHeader className="bg-slate-50 sticky top-0 z-10 shadow-sm">
-              <TableRow>
-                <TableHead className="w-[80px] font-semibold text-slate-600">ID</TableHead>
-                <TableHead className="font-semibold text-slate-600">Usuario</TableHead>
-                <TableHead className="font-semibold text-slate-600">Contacto</TableHead>
-                <TableHead className="font-semibold text-slate-600">Rol</TableHead>
-                <TableHead className="font-semibold text-slate-600">Estado</TableHead>
-                <TableHead className="text-right font-semibold text-slate-600">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody className="divide-y divide-slate-100">
-              {isLoading ? (
+        <button
+          onClick={() => setShowAdminModal(true)}
+          className="w-full sm:w-auto bg-[#0E7C86] hover:bg-[#095259] text-white font-bold px-5 py-2.5 rounded-xl shadow-sm flex items-center justify-center gap-2 text-sm transition-all"
+        >
+          <ShieldCheck className="w-4 h-4" />
+          Nuevo Administrador
+        </button>
+      </div>
+
+      {/* Alertas de Éxito o Error */}
+      {successMsg && (
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-2xl flex items-center gap-3 text-sm font-medium">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+          <span>{successMsg}</span>
+        </div>
+      )}
+
+      {errorMsg && (
+        <div className="bg-rose-50 border border-rose-200 text-rose-700 p-4 rounded-2xl flex items-center gap-3 text-sm font-medium">
+          <AlertTriangle className="w-5 h-5 text-rose-600 flex-shrink-0" />
+          <div>
+            <p className="font-bold">Error del Sistema:</p>
+            <p>{errorMsg}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Tabla de Usuarios */}
+      <Card className="rounded-2xl border-slate-200 shadow-sm overflow-hidden">
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-16">
+              <Loader2 className="w-10 h-10 text-[#0E7C86] animate-spin mb-3" />
+              <p className="text-slate-400 font-medium text-sm">Cargando directorio de usuarios...</p>
+            </div>
+          ) : usuariosFiltrados.length > 0 ? (
+            <Table>
+              <TableHeader className="bg-slate-50 border-b border-slate-200">
                 <TableRow>
-                  <TableCell colSpan={6} className="h-[250px] text-center">
-                    <div className="flex flex-col items-center justify-center text-slate-400 gap-3">
-                      <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
-                      <p className="text-sm font-medium">Cargando directorio de usuarios...</p>
-                    </div>
-                  </TableCell>
+                  <TableHead className="font-bold text-slate-700">Usuario</TableHead>
+                  <TableHead className="font-bold text-slate-700">Rol</TableHead>
+                  <TableHead className="font-bold text-slate-700">Contacto</TableHead>
+                  <TableHead className="font-bold text-slate-700">Estado</TableHead>
+                  <TableHead className="font-bold text-slate-700 text-right">Registro</TableHead>
                 </TableRow>
-              ) : filteredUsuarios.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-[250px] text-center">
-                    <div className="flex flex-col items-center justify-center text-slate-400 gap-2">
-                      <Users className="w-10 h-10 text-slate-300" />
-                      <p className="text-sm font-medium text-slate-500">
-                        {searchTerm ? "No se encontraron usuarios con esa búsqueda." : "No hay usuarios registrados en el sistema."}
-                      </p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredUsuarios.map((user) => (
-                  <TableRow key={user.user_id} className="hover:bg-slate-50/80 transition-colors group">
-                    <TableCell className="font-mono text-slate-400 text-xs py-3">
-                      {user.user_id != null ? `#${user.user_id.toString().padStart(4, "0")}` : "-"}
-                    </TableCell>
-                    
-                    <TableCell className="py-3">
-                      <div className="flex flex-col">
-                        <span className="font-medium text-slate-900">{user.firstName} {user.lastName}</span>
-                        <span className="text-xs text-slate-500">{user.email}</span>
+              </TableHeader>
+              <TableBody className="divide-y divide-slate-100">
+                {usuariosFiltrados.map((u, index) => (
+                  <TableRow key={u.user_id || `user-${index}`} className="hover:bg-slate-50/50 transition-colors">
+                    <TableCell className="font-medium text-slate-900">
+                      <div>
+                        <span className="font-bold">{u.firstName} {u.lastName}</span>
+                        <span className="block text-xs text-slate-400 font-mono">ID: #{u.user_id || "N/A"}</span>
                       </div>
                     </TableCell>
-
-                    <TableCell className="py-3 text-sm text-slate-600">
-                      {user.phone || "Sin teléfono"}
+                    <TableCell>
+                      {obtenerBadgeRol(u.role)}
                     </TableCell>
-
-                    <TableCell className="py-3">
-                      {getRoleBadge(user.role)}
+                    <TableCell className="text-xs space-y-0.5">
+                      <div className="text-slate-800 font-medium">{u.email}</div>
+                      <div className="text-slate-500 font-mono">{u.phone || "Sin teléfono"}</div>
                     </TableCell>
-
-                    <TableCell className="py-3">
-                      {getStatusBadge(user.status)}
+                    <TableCell>
+                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                        u.status === "ACTIVO" || u.status === "ACTIVE" 
+                          ? "bg-emerald-100 text-emerald-800" 
+                          : "bg-rose-100 text-rose-800"
+                      }`}>
+                        {u.status || "ACTIVO"}
+                      </span>
                     </TableCell>
-
-                    <TableCell className="text-right py-3">
-
-                     <DropdownMenu>
-                         <DropdownMenuTrigger 
-
-                                    className={buttonVariants({ 
-                                      variant: "outline", 
-                                      size: "sm", 
-                                      className: "text-slate-600 hover:text-teal-700 hover:bg-teal-50 hover:border-teal-200 cursor-pointer" 
-                                    })}
-                                  >
-                                    <UserCog className="w-4 h-4 sm:mr-2" />
-                                    <span className="hidden sm:inline">Gestionar</span>
-                                  
-                              
-                            </DropdownMenuTrigger>
-                          
-                          <DropdownMenuContent align="end" className="w-48">
-                            
-                            <DropdownMenuGroup>
-                              <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                              
-                              <DropdownMenuItem 
-                                onClick={() => navigator.clipboard.writeText(String(user.user_id || ""))} 
-                                className="cursor-pointer"
-                              >
-                                <Copy className="mr-2 h-4 w-4 text-slate-500" />
-                                <span>Copiar ID</span>
-                              </DropdownMenuItem>
-                              
-                              <DropdownMenuSeparator />
-                              
-                              {/* Usamos onClick para guardar al usuario de esta fila en la memoria */}
-                              <DropdownMenuItem 
-                                onClick={() => setUsuarioSeleccionado(user)} 
-                                className="cursor-pointer"
-                              >
-                                <Eye className="mr-2 h-4 w-4 text-slate-500" />
-                                <span>Ver perfil</span>
-                              </DropdownMenuItem>
-                                                            
-                              <DropdownMenuItem 
-                                onClick={() => setUsuarioAEditar(user)}
-                                className="cursor-pointer">
-
-                                <Pencil className="mr-2 h-4 w-4 text-slate-500" />
-                                <span>Editar datos</span>
-                              
-                              </DropdownMenuItem>
-                            </DropdownMenuGroup>
-                            
-                            <DropdownMenuSeparator />
-                            
-                            <DropdownMenuItem 
-                              onClick={() => setUsuarioASuspender(user)}
-                              className="cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50">
-                              <Ban className="mr-2 h-4 w-4" />
-                              <span>Suspender</span>
-                            </DropdownMenuItem>
-                            
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      
+                    <TableCell className="text-right text-xs text-slate-500 font-mono">
+                      {u.createdAt ? new Date(u.createdAt).toLocaleDateString("es-VE") : "N/A"}
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-
-          </Table>
-        </div>
-
-        <Sheet 
-        open={!!usuarioSeleccionado} 
-        onOpenChange={(open) => {
-          if (!open) setUsuarioSeleccionado(null);
-        }}
-      >
-        {/* Agregamos z-[99999] para que esté por encima de cualquier otra cosa en tu dashboard y bg-white para forzar el color de fondo */}
-        <SheetContent className="w-[400px] sm:w-[540px] z-[99999] bg-white">
-          <SheetHeader>
-            <SheetTitle>Detalles del Usuario</SheetTitle>
-            <SheetDescription>
-              Información completa registrada en la base de datos.
-            </SheetDescription>
-          </SheetHeader>
-          
-          {usuarioSeleccionado && (
-        <>
-          {/* Fondo oscuro (Overlay) */}
-          <div 
-            className="fixed inset-0 z-[99998] bg-slate-900/40 backdrop-blur-sm transition-opacity"
-            onClick={() => setUsuarioSeleccionado(null)}
-          />
-          
-          {/* El Panel Blanco */}
-          <div className="fixed inset-y-0 right-0 z-[99999] w-full sm:w-[450px] bg-white shadow-2xl p-6 sm:p-8 overflow-y-auto transform transition-transform duration-300 ease-in-out border-l border-slate-200">
-            
-            <div className="flex justify-between items-start mb-6 border-b border-slate-100 pb-4">
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">Detalles del Usuario</h2>
-                <p className="text-sm text-slate-500 mt-1">Información completa de la base de datos.</p>
-              </div>
-              <button 
-                onClick={() => setUsuarioSeleccionado(null)}
-                className="text-slate-400 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-full p-2 transition-colors"
-                title="Cerrar panel"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="p-12 text-center text-slate-400 text-sm space-y-2">
+              <Users className="w-12 h-12 mx-auto text-slate-300" />
+              <p className="font-bold text-slate-700">No se encontraron usuarios</p>
+              <p>Intenta con otros términos de búsqueda.</p>
             </div>
-            
-            <div className="space-y-5 text-slate-700 mt-8">
-              <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-4">
-                <span className="text-sm font-semibold text-slate-500 flex items-center">ID:</span>
-                <span className="col-span-2 font-medium text-slate-900">{String(usuarioSeleccionado.user_id)}</span>
-              </div>
-              <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-4">
-                <span className="text-sm font-semibold text-slate-500 flex items-center">Nombre:</span>
-                <span className="col-span-2 font-medium text-slate-900">
-                  {usuarioSeleccionado.firstName} {usuarioSeleccionado.lastName}
-                </span>
-              </div>
-              <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-4">
-                <span className="text-sm font-semibold text-slate-500 flex items-center">Email:</span>
-                <span className="col-span-2 font-medium text-slate-900 break-words">{usuarioSeleccionado.email}</span>
-              </div>
-              <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-4">
-                <span className="text-sm font-semibold text-slate-500 flex items-center">Teléfono:</span>
-                <span className="col-span-2 font-medium text-slate-900">{usuarioSeleccionado.phone || "No registrado"}</span>
-              </div>
-              <div className="grid grid-cols-3 gap-4 pb-4">
-                <span className="text-sm font-semibold text-slate-500 flex items-center">Estado:</span>
-                <span className="col-span-2 font-medium capitalize">{usuarioSeleccionado.status}</span>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-          </SheetContent>
-        </Sheet>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* ---------------------------------------------------- */}
-      {/* MODAL NATIVO (Suspender Usuario)                       */}
-      {/* ---------------------------------------------------- */}
-      {usuarioASuspender && (
-        <div className="fixed inset-0 z-[99998] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
-            
-            <div className="bg-red-50 p-6 flex items-center border-b border-red-100">
-              <div className="bg-red-100 p-2 rounded-full mr-4">
-                <AlertTriangle className="w-6 h-6 text-red-600" />
-              </div>
-              <h3 className="text-lg font-bold text-red-900">¿Suspender usuario?</h3>
-            </div>
-            
-            <div className="p-6 text-slate-600">
-              <p>
-                Estás a punto de suspender la cuenta de <span className="font-semibold text-slate-900">{usuarioASuspender.firstName} {usuarioASuspender.lastName}</span>.
-              </p>
-              <p className="mt-2 text-sm">
-                Esta acción revocará su acceso al sistema inmediatamente. Podrás reactivarlo más adelante si lo deseas.
-              </p>
-            </div>
-            
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 rounded-b-xl">
-              <button 
-                onClick={() => setUsuarioASuspender(null)}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 bg-white border border-slate-300 hover:bg-slate-50 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button 
-                onClick={() => {
-                  alert(`Lógica para suspender ID: ${usuarioASuspender.user_id}`);
-                  setUsuarioASuspender(null);
-                }}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition-colors shadow-sm"
-              >
-                Sí, suspender
-              </button>
-            </div>
-          </div>
-        </div>
-
-      )}
-
-      {/* ---------------------------------------------------- */}
-      {/* MODAL NATIVO (Editar Usuario)                        */}
-      {/* ---------------------------------------------------- */}
-      {usuarioAEditar && (
-        <div className="fixed inset-0 z-[99998] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-            
-            {/* Cabecera */}
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center">
-                <Pencil className="w-5 h-5 mr-2 text-teal-600" />
-                Editar Datos del Usuario
+      {/* MODAL DE CREAR ADMINISTRADOR */}
+      {showAdminModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in duration-200">
+            <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-4">
+              <h3 className="font-black text-lg text-slate-900 flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-[#0E7C86]" /> Crear Nuevo Admin
               </h3>
-              <button 
-                onClick={() => setUsuarioAEditar(null)}
-                className="text-slate-400 hover:text-slate-700 bg-white hover:bg-slate-100 rounded-full p-2 transition-colors border border-transparent hover:border-slate-200"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
+              <button onClick={() => setShowAdminModal(false)} className="text-slate-400 hover:text-slate-600">
+                <XCircle className="w-6 h-6" />
               </button>
             </div>
-            
-            {/* Formulario */}
-            <form 
 
-              onSubmit={async (e) => {
-                  e.preventDefault();
-                  
-                  // 1. Capturamos los datos del formulario
-                  const formData = new FormData(e.currentTarget);
-                  const datosActualizados = Object.fromEntries(formData.entries());
-                  
-                  try {
-                    // 2. Enviamos la actualización a tu API
-                    // OJO: Cambia '/api/users' por la ruta real de tu backend si es diferente
-                    const response = await fetch(`/api/users/${usuarioAEditar.user_id}`, {
-                      method: 'PUT', // o 'PATCH', dependiendo de cómo hiciste tu backend
-                      headers: {
-                        'Content-Type': 'application/json',
-                      },
-                      body: JSON.stringify(datosActualizados),
-                    });
-
-                    if (!response.ok) {
-                      throw new Error('Error al guardar en la base de datos');
-                    }
-
-                    // 3. Si todo salió bien:
-                    setUsuarioAEditar(null); // Cerramos el modal
-                    
-                    // 4. Forzamos a Next.js a actualizar la tabla en el fondo 
-                    // sin recargar toda la página
-                    router.refresh(); 
-                    
-                    // Opcional: Podrías poner aquí una notificación (Toast) de éxito
-                    alert("¡Usuario actualizado correctamente!"); 
-
-                  } catch (error) {
-                    console.error("Error actualizando usuario:", error);
-                    alert("Hubo un problema al guardar los cambios.");
-                  }
-                }}
-
-
-
-                
-              className="overflow-y-auto p-6 space-y-4"
-            >
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Campo Nombre */}
-                <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Nombre</label>
-                  <input 
-                    type="text" 
-                    name="firstName" 
-                    defaultValue={usuarioAEditar.firstName} 
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm"
+            <form onSubmit={handleCreateAdmin} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Nombre</label>
+                  <input
+                    type="text"
                     required
+                    value={nombre}
+                    onChange={(e) => setNombre(e.target.value)}
+                    placeholder="Ej: Carlos"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#0E7C86] focus:outline-none"
                   />
                 </div>
-                
-                {/* Campo Apellido */}
-                <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Apellido</label>
-                  <input 
-                    type="text" 
-                    name="lastName" 
-                    defaultValue={usuarioAEditar.lastName} 
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm"
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Apellido</label>
+                  <input
+                    type="text"
                     required
+                    value={apellido}
+                    onChange={(e) => setApellido(e.target.value)}
+                    placeholder="Ej: Rodríguez"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#0E7C86] focus:outline-none"
                   />
                 </div>
               </div>
 
-              {/* Campo Email (usualmente es de solo lectura, pero lo dejamos editable por si acaso) */}
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-slate-700">Correo Electrónico</label>
-                <input 
-                  type="email" 
-                  name="email" 
-                  defaultValue={usuarioAEditar.email} 
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm bg-slate-50"
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Correo Electrónico</label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="admin@decarrerita.com"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#0E7C86] focus:outline-none"
                 />
               </div>
 
-              {/* Campo Teléfono */}
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-slate-700">Teléfono</label>
-                <input 
-                  type="tel" 
-                  name="phone" 
-                  defaultValue={usuarioAEditar.phone || ""} 
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm"
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Teléfono</label>
+                <input
+                  type="text"
+                  required
+                  value={telefono}
+                  onChange={(e) => setTelefono(e.target.value)}
+                  placeholder="04141234567"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-[#0E7C86] focus:outline-none"
+                />
+                <span className="text-[10px] text-slate-400">Ingresa entre 8 y 15 dígitos numéricos.</span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Contraseña</label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#0E7C86] focus:outline-none"
                 />
               </div>
 
-              {/* Botones de acción del formulario */}
-              <div className="pt-6 flex justify-end gap-3">
-                <button 
+              <div className="pt-4 flex gap-3">
+                <button
                   type="button"
-                  onClick={() => setUsuarioAEditar(null)}
-                  className="px-4 py-2 rounded-lg text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition-colors"
+                  onClick={() => setShowAdminModal(false)}
+                  className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-600 font-bold text-sm rounded-xl hover:bg-slate-50 transition-colors"
                 >
                   Cancelar
                 </button>
-                <button 
+                <button
                   type="submit"
-                  className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 transition-colors shadow-sm flex items-center"
+                  disabled={submittingAdmin}
+                  className="flex-1 bg-[#0E7C86] hover:bg-[#095259] disabled:bg-slate-300 text-white font-bold text-sm py-2.5 rounded-xl shadow-sm flex justify-center items-center gap-2 transition-all"
                 >
-                  Guardar Cambios
+                  {submittingAdmin ? <Loader2 className="w-4 h-4 animate-spin" /> : "Crear Admin"}
                 </button>
               </div>
             </form>
           </div>
         </div>
-      
       )}
-
-    </CardContent>
-  </Card>
-    
+    </div>
   );
 }

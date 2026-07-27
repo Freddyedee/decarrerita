@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { 
   History, Loader2, Calendar, MapPin, 
   User, Star, MessageSquare, AlertCircle, CheckCircle2, 
-  XCircle, Car 
+  XCircle, Car, Filter, X 
 } from "lucide-react";
 
 interface Calificacion {
@@ -14,7 +14,6 @@ interface Calificacion {
   calificador_es_cliente: boolean;
 }
 
-// CORRECCIÓN: Estructura anidada para coincidir con la relación cliente -> usuario en Prisma
 interface TrasladoHistorial {
   id_traslado: number;
   fecha_solicitud: string;
@@ -40,8 +39,12 @@ interface TrasladoHistorial {
 export default function ChoferHistorialClient({ choferId }: { choferId: number }) {
   const [traslados, setTraslados] = useState<TrasladoHistorial[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filtroEstado, setFiltroEstado] = useState<"TODOS" | "FINALIZADOS" | "CANCELADOS">("FINALIZADOS");
   const [errorMsg, setErrorMsg] = useState("");
+
+  // Estados de Filtros
+  const [filtroEstado, setFiltroEstado] = useState<"TODOS" | "FINALIZADOS" | "CANCELADOS">("FINALIZADOS");
+  const [fechaDesde, setFechaDesde] = useState("");
+  const [fechaHasta, setFechaHasta] = useState("");
 
   const cargarHistorial = async () => {
     try {
@@ -74,30 +77,54 @@ export default function ChoferHistorialClient({ choferId }: { choferId: number }
     }
   }, [choferId]);
 
-  // Lógica de filtrado en cliente
+  // Lógica combinada de filtrado: Estado + Rango de Fechas
   const trasladosFiltrados = traslados.filter((t) => {
     const estado = (t.estado_actual || "").toUpperCase();
+    
+    // 1. Filtro de Estado
+    let pasaEstado = true;
     if (filtroEstado === "FINALIZADOS") {
-      return estado === "FINALIZADO" || estado === "COMPLETADO";
+      pasaEstado = estado === "FINALIZADO" || estado === "COMPLETADO";
+    } else if (filtroEstado === "CANCELADOS") {
+      pasaEstado = estado === "CANCELADO" || estado === "RECHAZADO";
     }
-    if (filtroEstado === "CANCELADOS") {
-      return estado === "CANCELADO" || estado === "RECHAZADO";
+
+    // 2. Filtro de Fecha Desde
+    let pasaDesde = true;
+    if (fechaDesde) {
+      const fechaViaje = new Date(t.fecha_solicitud).getTime();
+      const limiteDesde = new Date(`${fechaDesde}T00:00:00`).getTime();
+      pasaDesde = fechaViaje >= limiteDesde;
     }
-    return true;
+
+    // 3. Filtro de Fecha Hasta
+    let pasaHasta = true;
+    if (fechaHasta) {
+      const fechaViaje = new Date(t.fecha_solicitud).getTime();
+      const limiteHasta = new Date(`${fechaHasta}T23:59:59`).getTime();
+      pasaHasta = fechaViaje <= limiteHasta;
+    }
+
+    return pasaEstado && pasaDesde && pasaHasta;
   });
 
-  // Cálculo de estadísticas rápidas
-  const totalGanado = traslados
+  // Cálculo de estadísticas dinámicas (basadas en los filtros actuales)
+  const totalGanado = trasladosFiltrados
     .filter(t => (t.estado_actual || "").toUpperCase() === "FINALIZADO" || (t.estado_actual || "").toUpperCase() === "COMPLETADO")
     .reduce((acc, t) => acc + Number(t.costo_estimado || 0), 0);
 
-  const totalViajesCompletados = traslados.filter(
+  const totalViajesCompletados = trasladosFiltrados.filter(
     t => (t.estado_actual || "").toUpperCase() === "FINALIZADO" || (t.estado_actual || "").toUpperCase() === "COMPLETADO"
   ).length;
 
+  const limpiarFechas = () => {
+    setFechaDesde("");
+    setFechaHasta("");
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-8">
-      {/* Encabezado y Estadísticas */}
+      {/* Encabezado y Estadísticas Dinámicas */}
       <div className="bg-gradient-to-r from-[#0E7C86] to-[#095259] text-white p-6 rounded-3xl shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-black flex items-center gap-2">
@@ -109,12 +136,12 @@ export default function ChoferHistorialClient({ choferId }: { choferId: number }
         </div>
         <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/10 w-full md:w-auto justify-around">
           <div className="text-center">
-            <span className="text-[10px] uppercase font-bold text-teal-200 block">Viajes Hechos</span>
+            <span className="text-[10px] uppercase font-bold text-teal-200 block">Viajes (Periodo)</span>
             <span className="text-xl font-black font-mono">{totalViajesCompletados}</span>
           </div>
           <div className="h-8 w-px bg-white/20"></div>
           <div className="text-center">
-            <span className="text-[10px] uppercase font-bold text-teal-200 block">Total Generado</span>
+            <span className="text-[10px] uppercase font-bold text-teal-200 block">Generado (Periodo)</span>
             <span className="text-xl font-black font-mono text-emerald-300">${totalGanado.toFixed(2)}</span>
           </div>
         </div>
@@ -128,32 +155,76 @@ export default function ChoferHistorialClient({ choferId }: { choferId: number }
         </div>
       )}
 
-      {/* Barra de Filtros (Pestañas) */}
-      <div className="flex bg-slate-200/60 p-1.5 rounded-2xl gap-1">
-        <button
-          onClick={() => setFiltroEstado("FINALIZADOS")}
-          className={`flex-1 py-2.5 rounded-xl font-extrabold text-xs transition-all flex justify-center items-center gap-1.5 ${
-            filtroEstado === "FINALIZADOS" ? "bg-white text-[#0E7C86] shadow-sm" : "text-slate-600 hover:text-slate-900"
-          }`}
-        >
-          <CheckCircle2 className="w-4 h-4" /> Completados
-        </button>
-        <button
-          onClick={() => setFiltroEstado("CANCELADOS")}
-          className={`flex-1 py-2.5 rounded-xl font-extrabold text-xs transition-all flex justify-center items-center gap-1.5 ${
-            filtroEstado === "CANCELADOS" ? "bg-white text-rose-600 shadow-sm" : "text-slate-600 hover:text-slate-900"
-          }`}
-        >
-          <XCircle className="w-4 h-4" /> Cancelados
-        </button>
-        <button
-          onClick={() => setFiltroEstado("TODOS")}
-          className={`flex-1 py-2.5 rounded-xl font-extrabold text-xs transition-all flex justify-center items-center gap-1.5 ${
-            filtroEstado === "TODOS" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"
-          }`}
-        >
-          Todos ({traslados.length})
-        </button>
+      {/* PANEL DE FILTROS: Estado + Rango de Fechas */}
+      <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+        {/* Pestañas de Estado */}
+        <div className="flex bg-slate-100 p-1.5 rounded-2xl gap-1">
+          <button
+            onClick={() => setFiltroEstado("FINALIZADOS")}
+            className={`flex-1 py-2 rounded-xl font-extrabold text-xs transition-all flex justify-center items-center gap-1.5 ${
+              filtroEstado === "FINALIZADOS" ? "bg-white text-[#0E7C86] shadow-sm" : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <CheckCircle2 className="w-4 h-4" /> Completados
+          </button>
+          <button
+            onClick={() => setFiltroEstado("CANCELADOS")}
+            className={`flex-1 py-2 rounded-xl font-extrabold text-xs transition-all flex justify-center items-center gap-1.5 ${
+              filtroEstado === "CANCELADOS" ? "bg-white text-rose-600 shadow-sm" : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <XCircle className="w-4 h-4" /> Cancelados
+          </button>
+          <button
+            onClick={() => setFiltroEstado("TODOS")}
+            className={`flex-1 py-2 rounded-xl font-extrabold text-xs transition-all flex justify-center items-center gap-1.5 ${
+              filtroEstado === "TODOS" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            Todos
+          </button>
+        </div>
+
+        {/* Selector de Rango de Fechas */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-slate-100 text-xs">
+          <div className="flex items-center gap-2 w-full sm:w-auto text-slate-700 font-bold">
+            <Filter className="w-4 h-4 text-[#0E7C86]" />
+            <span>Periodo:</span>
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl flex-1 sm:flex-initial">
+              <span className="text-slate-400 font-medium">Desde:</span>
+              <input
+                type="date"
+                value={fechaDesde}
+                onChange={(e) => setFechaDesde(e.target.value)}
+                className="bg-transparent font-bold text-slate-800 focus:outline-none cursor-pointer"
+              />
+            </div>
+
+            <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl flex-1 sm:flex-initial">
+              <span className="text-slate-400 font-medium">Hasta:</span>
+              <input
+                type="date"
+                value={fechaHasta}
+                onChange={(e) => setFechaHasta(e.target.value)}
+                className="bg-transparent font-bold text-slate-800 focus:outline-none cursor-pointer"
+              />
+            </div>
+
+            {(fechaDesde || fechaHasta) && (
+              <button
+                onClick={limpiarFechas}
+                title="Limpiar filtro de fechas"
+                className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl border border-rose-100 transition-colors flex items-center gap-1 font-bold"
+              >
+                <X className="w-4 h-4" />
+                <span className="hidden md:inline">Limpiar</span>
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Lista de Traslados */}
@@ -166,8 +237,6 @@ export default function ChoferHistorialClient({ choferId }: { choferId: number }
         <div className="space-y-4">
           {trasladosFiltrados.map((v) => {
             const esFinalizado = (v.estado_actual || "").toUpperCase() === "FINALIZADO" || (v.estado_actual || "").toUpperCase() === "COMPLETADO";
-            
-            // Buscamos específicamente la calificación que el cliente le dio a este chofer
             const calificacionCliente = v.calificacion?.find(c => c.calificador_es_cliente === true);
 
             return (
@@ -175,7 +244,6 @@ export default function ChoferHistorialClient({ choferId }: { choferId: number }
                 key={v.id_traslado}
                 className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between space-y-4"
               >
-                {/* Cabecera de la tarjeta: ID, Fecha y Estado */}
                 <div className="flex justify-between items-start border-b border-slate-100 pb-3">
                   <div>
                     <span className="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700">
@@ -199,7 +267,6 @@ export default function ChoferHistorialClient({ choferId }: { choferId: number }
                   </div>
                 </div>
 
-                {/* Cuerpo: Información de Ruta y Cliente */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
                   <div className="space-y-1 text-xs">
                     <div className="flex items-center gap-2 text-slate-700">
@@ -223,7 +290,6 @@ export default function ChoferHistorialClient({ choferId }: { choferId: number }
                     )}
                   </div>
 
-                  {/* Sección de Evaluación del Cliente */}
                   <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 flex flex-col justify-center">
                     {calificacionCliente ? (
                       <div className="space-y-1.5">
@@ -262,8 +328,16 @@ export default function ChoferHistorialClient({ choferId }: { choferId: number }
           <History className="w-12 h-12 text-slate-300 mx-auto" />
           <h3 className="font-bold text-slate-700 text-base">No se encontraron traslados</h3>
           <p className="text-sm text-slate-400 max-w-sm mx-auto">
-            No tienes registros que coincidan con el filtro seleccionado ("{filtroEstado.toLowerCase()}").
+            No tienes registros que coincidan con los filtros y el rango de fechas seleccionado.
           </p>
+          {(fechaDesde || fechaHasta) && (
+            <button
+              onClick={limpiarFechas}
+              className="text-xs font-bold text-[#0E7C86] underline block mx-auto mt-2"
+            >
+              Limpiar filtro de fechas
+            </button>
+          )}
         </div>
       )}
     </div>

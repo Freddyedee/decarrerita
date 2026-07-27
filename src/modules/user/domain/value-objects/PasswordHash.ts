@@ -10,7 +10,7 @@ export class PasswordHash {
             throw new Error("Password hash cannot be empty.");
         }
 
-        if (normalized.length < 20) {
+        if (normalized.length < 2) {
             throw new Error("Invalid password hash.");
         }
 

@@ -33,12 +33,40 @@ export class TrasladoRepository implements TrasladoRepository{
         return trasladoMapper.toDomain(updated); 
     }
 
-     async findByClienteId(clienteId: number): Promise<Traslado[]> {
+    async findByClienteId(clienteId: number): Promise<any[]> {
         const traslados = await prisma.traslado.findMany({
-            where: { id_cliente: clienteId },
-            orderBy: { fecha_solicitud: "desc" }
+            where: { 
+                id_cliente: clienteId 
+            },
+            include: {
+                chofer: {
+                    select: {
+                        id_usuario: true,
+                        licencia: true,
+                        usuario: {
+                            select: {
+                                nombre: true,
+                                apellido: true,
+                                telefono: true
+                            }
+                        }
+                    }
+                },
+                vehiculo: {
+                    select: {
+                        placa: true,
+                        modelo: true,
+                        color: true
+                    }
+                },
+                calificacion: true
+            },
+            orderBy: { 
+                fecha_solicitud: "desc" 
+            }
         });
-        return traslados.map(t => trasladoMapper.toDomain(t));
+
+        return traslados;
     }
 
     async findByChoferId(choferId: number): Promise<any[]> {

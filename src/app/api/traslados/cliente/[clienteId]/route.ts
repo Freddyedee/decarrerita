@@ -1,18 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { trasladoController } from "@/modules/Traslado/presentation/traslado.modules";
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ clienteId: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ clienteId: string }> }
+) {
   try {
-    // 1. Extraemos el clienteId esperando la promesa
-    const { clienteId } = await params; 
+    const { clienteId } = await params;
 
-    // 2. Usamos la variable extraída
+    if (!clienteId || isNaN(Number(clienteId))) {
+      return NextResponse.json({ message: "ID de cliente inválido" }, { status: 400 });
+    }
+
     const traslados = await trasladoController.getByCliente(Number(clienteId));
     
-    return NextResponse.json({ message: "Historial retrieved successfully", data: traslados }, { status: 200 });
-  } catch (error) {
     return NextResponse.json(
-      { message: "Error retrieving historial", error: error instanceof Error ? error.message : "Unknown error" },
+      { message: "Historial de traslados obtenido con éxito", data: traslados },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("❌ [API TRASLADOS CLIENTE] Error:", error);
+    return NextResponse.json(
+      { message: "Error al recuperar traslados del cliente", error: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
     );
   }
