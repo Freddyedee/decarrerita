@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, CarFront, Wallet, User } from "lucide-react";
+import { Home, CarFront, Wallet, User, History } from "lucide-react";
 
 export default function BottomNav() {
   const pathname = usePathname();
@@ -11,6 +11,7 @@ export default function BottomNav() {
   const navItems = [
     { name: "Radar", href: "/chofer", icon: Home },
     { name: "Vehículos", href: "/chofer/vehiculos", icon: CarFront },
+    { name: "Historial", href: "/chofer/historial", icon: History },
     { name: "Wallet", href: "/chofer/wallet", icon: Wallet },
     { name: "Perfil", href: "/chofer/perfil", icon: User },
   ];

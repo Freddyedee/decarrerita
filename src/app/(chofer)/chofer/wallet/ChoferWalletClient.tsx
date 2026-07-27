@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Wallet, ArrowUpRight, History, Clock, CheckCircle2, XCircle, AlertCircle, Building2, CreditCard, User, Loader2 } from "lucide-react";
+import { 
+  Wallet, ArrowUpRight, History, Clock, CheckCircle2, 
+  XCircle, AlertCircle, Building2, CreditCard, User, Loader2 
+} from "lucide-react";
 
 interface Movimiento {
   id_movimiento: number;
@@ -32,39 +35,64 @@ interface WalletData {
   solicitud_retiro: SolicitudRetiro[];
 }
 
-export default function ChoferWalletClient({ choferId = 15 }: { choferId: number }) {
+// Reemplaza la interfaz Banco por esta:
+interface Banco {
+  id: number;
+  nombre: string;
+}
+
+export default function ChoferWalletClient({ choferId }: { choferId: number }) {
   const [wallet, setWallet] = useState<WalletData | null>(null);
+  const [bancos, setBancos] = useState<Banco[]>([]);
+  
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
-  // Estado del Formulario de Retiro
+  // Estado del Formulario de Retiro Dinámico
   const [montoRetiro, setMontoRetiro] = useState("");
+  const [bancoId, setBancoId] = useState<number | "">("");
   const [numeroCuenta, setNumeroCuenta] = useState("");
   const [titularCuenta, setTitularCuenta] = useState("");
 
+  // Cargar datos de la Wallet y lista de Bancos
   const fetchWalletData = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/drivers/${choferId}/wallet`);
-      if (res.ok) {
-        const { data } = await res.json();
+      
+      // 1. Consultar datos de la wallet del chofer en sesión
+      const resWallet = await fetch(`/api/drivers/${choferId}/wallet?t=${Date.now()}`, { cache: "no-store" });
+      if (resWallet.ok) {
+        const { data } = await resWallet.json();
         setWallet(data);
       }
+
+      // 2. Consultar catálogo de bancos de la base de datos
+      const resBancos = await fetch(`/api/bancos`, { cache: "no-store" });
+      if (resBancos.ok) {
+        const resJson = await resBancos.json();
+        const listaBancos = Array.isArray(resJson.data) ? resJson.data : Array.isArray(resJson) ? resJson : [];
+        setBancos(listaBancos);
+        if (listaBancos.length > 0) {
+          setBancoId(listaBancos[0].id_banco);
+        }
+      }
     } catch (error) {
-      console.error("Error cargando wallet:", error);
+      console.error("Error cargando wallet o bancos:", error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchWalletData();
+    if (choferId) {
+      fetchWalletData();
+    }
   }, [choferId]);
 
-  // UX SUPERPOWER: Botón de "Retirar Todo"
+  // UX: Rellenar el 100% del saldo disponible
   const handleRetirarTodo = () => {
     if (wallet) {
       setMontoRetiro(Number(wallet.saldo_disponible).toFixed(2));
@@ -77,15 +105,21 @@ export default function ChoferWalletClient({ choferId = 15 }: { choferId: number
     setSuccessMsg("");
     setSubmitting(true);
 
+    if (!bancoId || typeof bancoId !== "number" || bancoId <= 0) {
+      setErrorMsg("Debe seleccionar un banco de destino válido.");
+      setSubmitting(false);
+      return;
+    }
+
     try {
       const res = await fetch(`/api/drivers/${choferId}/retiro`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           monto: Number(montoRetiro),
-          numeroCuenta,
-          titularCuenta,
-          bancoId: 1 // Banco por defecto para simplificar la prueba
+          bancoId: Number(bancoId), // <-- ¡DINÁMICO SEGÚN LA SELECCIÓN DEL CHOFER!
+          numeroCuenta: numeroCuenta.trim(),
+          titularCuenta: titularCuenta.trim(),
         }),
       });
 
@@ -97,11 +131,14 @@ export default function ChoferWalletClient({ choferId = 15 }: { choferId: number
 
       setSuccessMsg("¡Retiro solicitado exitosamente! Está en revisión por tesorería.");
       setShowModal(false);
+      
+      // Reiniciar formulario
       setMontoRetiro("");
       setNumeroCuenta("");
       setTitularCuenta("");
-      
-      // Recargamos los saldos y movimientos automáticamente
+      if (bancos.length > 0) setBancoId(bancos[0].id);
+
+      // Recargar datos
       await fetchWalletData();
     } catch (error: any) {
       setErrorMsg(error.message);
@@ -120,7 +157,7 @@ export default function ChoferWalletClient({ choferId = 15 }: { choferId: number
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6 pb-8">
       {/* Encabezado */}
       <div className="flex items-center justify-between border-b border-slate-200 pb-4">
         <div>
@@ -137,7 +174,7 @@ export default function ChoferWalletClient({ choferId = 15 }: { choferId: number
         </button>
       </div>
 
-      {/* Alertas globales */}
+      {/* Alerta de Éxito */}
       {successMsg && (
         <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-2xl flex items-center gap-3">
           <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0" />
@@ -172,7 +209,7 @@ export default function ChoferWalletClient({ choferId = 15 }: { choferId: number
         </div>
       </div>
 
-      {/* Sección: Solicitudes de Retiro Activas */}
+      {/* Historial de Solicitudes de Retiro */}
       {wallet?.solicitud_retiro && wallet.solicitud_retiro.length > 0 && (
         <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
@@ -207,7 +244,7 @@ export default function ChoferWalletClient({ choferId = 15 }: { choferId: number
         </div>
       )}
 
-      {/* Sección: Historial de Movimientos */}
+      {/* Historial de Movimientos */}
       <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
           <History className="w-5 h-5 text-[#0E7C86]" />
@@ -246,10 +283,10 @@ export default function ChoferWalletClient({ choferId = 15 }: { choferId: number
         </div>
       </div>
 
-      {/* MODAL DE RETIRO */}
+      {/* MODAL DE RETIRO CON DROPDOWN DE BANCOS */}
       {showModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-xl border border-slate-200 animate-in fade-in zoom-in duration-200">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 my-8 animate-in fade-in zoom-in duration-200">
             <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-4">
               <h3 className="font-black text-lg text-slate-900 flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-[#0E7C86]" /> Solicitar Retiro Bancario
@@ -267,6 +304,7 @@ export default function ChoferWalletClient({ choferId = 15 }: { choferId: number
             )}
 
             <form onSubmit={handleSolicitarRetiro} className="space-y-4">
+              {/* MONTO */}
               <div>
                 <div className="flex justify-between items-center mb-1">
                   <label className="text-xs font-bold text-slate-700 uppercase">Monto a Retirar ($)</label>
@@ -293,6 +331,27 @@ export default function ChoferWalletClient({ choferId = 15 }: { choferId: number
                 </div>
               </div>
 
+              {/* SELECTOR DE BANCO DE DESTINO */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Banco de Destino</label>
+                <div className="relative">
+                  <Building2 className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 pointer-events-none" />
+                  <select
+                    value={bancoId}
+                    onChange={(e) => setBancoId(Number(e.target.value))}
+                    required
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0E7C86]"
+                  >
+                    {bancos.map((b) => (
+                      <option key={`banco-${b.id}`} value={b.id}>
+                        {b.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* NÚMERO DE CUENTA / PAGO MÓVIL */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Número de Cuenta / Pago Móvil</label>
                 <div className="relative">
@@ -308,6 +367,7 @@ export default function ChoferWalletClient({ choferId = 15 }: { choferId: number
                 </div>
               </div>
 
+              {/* TITULAR DE LA CUENTA */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Titular de la Cuenta / C.I.</label>
                 <div className="relative">
@@ -317,24 +377,25 @@ export default function ChoferWalletClient({ choferId = 15 }: { choferId: number
                     required
                     value={titularCuenta}
                     onChange={(e) => setTitularCuenta(e.target.value)}
-                    placeholder="Ej: Chofer Decarrerita - V-12345678"
+                    placeholder="Ej: Nombre Apellido - V-12345678"
                     className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0E7C86]"
                   />
                 </div>
               </div>
 
+              {/* BOTONES DE ACCIÓN */}
               <div className="pt-2 flex gap-3">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-3 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors"
+                  className="flex-1 px-4 py-3 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors text-sm"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting || !montoRetiro || Number(montoRetiro) <= 0}
-                  className="flex-1 bg-[#0E7C86] hover:bg-[#0b626a] disabled:bg-slate-300 text-white font-bold py-3 rounded-xl shadow-sm flex justify-center items-center gap-2 transition-all"
+                  disabled={submitting || !montoRetiro || Number(montoRetiro) <= 0 || !bancoId}
+                  className="flex-1 bg-[#0E7C86] hover:bg-[#0b626a] disabled:bg-slate-300 text-white font-bold py-3 rounded-xl shadow-sm flex justify-center items-center gap-2 transition-all text-sm"
                 >
                   {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Confirmar Retiro"}
                 </button>

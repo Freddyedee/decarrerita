@@ -3,3 +3,5 @@ CREATE TABLE marca (
     nombre VARCHAR(50) NOT NULL UNIQUE,
     descripcion VARCHAR(100) DEFAULT NULL
 );
+
+SELECT * FROM marca;

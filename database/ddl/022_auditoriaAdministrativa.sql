@@ -15,3 +15,5 @@ CREATE TABLE auditoria_administrativa (
     FOREIGN KEY (id_usuario_admin)
      REFERENCES usuario(id_usuario)
 ); 
+
+SELECT * FROM auditoria_administrativa;

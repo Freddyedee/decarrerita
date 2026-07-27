@@ -4,3 +4,5 @@ CREATE TABLE banco (
     codigo_banco VARCHAR(20) NOT NULL UNIQUE,
     activo BOOLEAN NOT NULL DEFAULT TRUE
 );
+
+SELECT * FROM banco;    

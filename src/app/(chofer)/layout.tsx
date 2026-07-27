@@ -3,18 +3,15 @@ import BottomNav from "@/components/chofer/BottomNav";
 
 export default function ChoferLayout({ children }: { children: ReactNode }) {
   return (
-    // min-h-screen asegura que ocupe toda la pantalla
-    // bg-gray-50 da un color de fondo neutro típico de apps móviles
     <div className="min-h-screen bg-gray-50 flex flex-col relative">
       
-      {/* Contenedor principal. El pb-20 (padding-bottom) es crucial 
-          para que la lista de traslados no se esconda detrás del menú inferior */}
-      <main className="flex-1 pb-20">
-        {/* Aquí Next.js inyectará page.tsx (el Radar, Wallet, etc.) */}
+      {/* pt-20 (o pt-24 en pantallas medianas) EMPUJA todo el contenido hacia abajo.
+        Con esto, ninguna de las ventanas del chofer volverá a quedar cortada por la barra superior.
+      */}
+      <main className="flex-1 pt-20 md:pt-24 pb-12 px-4 max-w-7xl mx-auto w-full">
         {children}
       </main>
 
-      {/* Inyectamos nuestra barra de navegación */}
       <BottomNav />
     </div>
   );

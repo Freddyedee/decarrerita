@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { UserResponse } from "@/modules/user/application/dto/UserResponse";
 import { actualizarPerfilChofer } from "./actions";
-import VehiclesPanel from "../../VehiclesPanel";
 import ContactosEmergenciaPanel from "../../EmergencyContacts";
 import { 
   User, 
@@ -216,9 +215,6 @@ export default function ChoferPerfilClient({
 
       {/* SECCIÓN 2: HERRAMIENTAS DEL CHOFER (VEHÍCULOS Y CONTACTOS DE EMERGENCIA) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Panel de Vehículos */}
-        <VehiclesPanel choferId={usuario.user_id || 0} />
-
         {/* Panel de Contactos de Emergencia */}
         <ContactosEmergenciaPanel choferId={usuario.user_id || 0} />
       </div>

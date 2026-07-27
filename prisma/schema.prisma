@@ -319,4 +319,14 @@ model marca {
   nombre      String     @unique @db.VarChar(50)
   descripcion String?    @db.VarChar(100)
   vehiculo    vehiculo[]
+  modelos     modelo[]
+}
+
+model modelo {
+  id_modelo Int    @id @default(autoincrement())
+  id_marca  Int
+  nombre    String @db.VarChar(50)
+  
+  // Relación con la tabla marca
+  marca     marca  @relation(fields: [id_marca], references: [id_marca], onDelete: Cascade)
 }
