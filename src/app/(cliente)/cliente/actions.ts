@@ -4,8 +4,50 @@ import { getCurrentRole } from "@/shared/auth/userCurrentRole";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 
-// IMPORTANTE: Ajusta esta ruta hacia donde guardaste tu archivo traslado.modules.ts
 import { trasladoController } from "@/modules/Traslado/presentation/traslado.modules";
+
+export async function verificarViajeActivo() {
+  try {
+    const sesion = await getCurrentRole();
+    if (!sesion || !sesion.usuarioId || !sesion.rol) {
+      return { success: false, trasladoId: null, estado: null, rol: null };
+    }
+
+    const usuarioId = sesion.usuarioId;
+    const esCliente = sesion.rol === "CLIENTE";
+
+    // Buscamos si el usuario tiene algún viaje que esté en proceso (no finalizado ni cancelado)
+    const viajeActivo = await prisma.traslado.findFirst({
+      where: {
+        ...(esCliente ? { id_cliente: usuarioId } : { id_chofer: usuarioId }),
+        estado_actual: {
+          in: ["ACEPTADO", "EN_CAMINO", "EN_CURSO", "LLEGADO"], // Estados vivos del viaje
+        },
+      },
+      orderBy: {
+        fecha_solicitud: "desc",
+      },
+      select: {
+        id_traslado: true,
+        estado_actual: true,
+      },
+    });
+
+    if (viajeActivo) {
+      return { 
+        success: true, 
+        trasladoId: viajeActivo.id_traslado,
+        estado: viajeActivo.estado_actual,
+        rol: sesion.rol
+      };
+    }
+
+    return { success: false, trasladoId: null, estado: null, rol: sesion.rol };
+  } catch (error) {
+    console.error("❌ [ERROR VERIFICANDO VIAJE ACTIVO]:", error);
+    return { success: false, trasladoId: null, estado: null, rol: null };
+  }
+}
 
 export async function verificarViajePendienteCalificar(esCliente: boolean) {
   try {

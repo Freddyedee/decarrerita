@@ -15,9 +15,51 @@ export class TrasladoRepository implements TrasladoRepository{
         return trasladoMapper.toDomain(created);
     }
 
-    async findById(id:number): Promise<Traslado | null>{
-        const traslado = await prisma.traslado.findUnique ({where: { id_traslado : id}}); 
-        return traslado ? trasladoMapper.toDomain(traslado) : null; 
+    async findById(id: number): Promise<any | null> {
+        const traslado = await prisma.traslado.findUnique({
+            where: { id_traslado: id },
+            include: {
+                chofer: {
+                    include: {
+                        usuario: {
+                            select: { nombre: true, apellido: true, telefono: true, email: true }
+                        }
+                    }
+                },
+                cliente: {
+                    include: {
+                        usuario: {
+                            select: { nombre: true, apellido: true, telefono: true, email: true }
+                        }
+                    }
+                },
+                vehiculo: {
+                    include: {
+                        marca: {
+                            select: { nombre: true }
+                        }
+                    }
+                },
+                tarifa: true,
+                calificacion: true
+            }
+        }); 
+
+        if (!traslado) return null;
+
+        // 1. Convertimos el JSON plano de Prisma a tu Entidad de Dominio
+        // (Esto restaura los métodos de negocio como .iniciar() o .completar())
+        const domainEntity = trasladoMapper.toDomain(traslado);
+
+        // 2. Le adjuntamos las relaciones anidadas al objeto de dominio
+        // (Así el UseCase puede usar .iniciar() y el frontend recibe el chofer y el vehículo)
+        return Object.assign(domainEntity, {
+            chofer: traslado.chofer,
+            cliente: traslado.cliente,
+            vehiculo: traslado.vehiculo,
+            tarifa: traslado.tarifa,
+            calificacion: traslado.calificacion
+        });
     }
 
     async update(traslado: Traslado, tx?: Prisma.TransactionClient): Promise<Traslado>{

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import MapaWrapper from "@/components/cliente/MapaWrapper";
 import { DatosRuta } from "@/components/cliente/MapaTraslado";
-import { solicitarNuevoTraslado, cotizarViaje } from "./actions";
+import { solicitarNuevoTraslado, cotizarViaje, verificarViajeActivo } from "./actions";
 import { Car, Loader2, MapPin, Navigation, ShieldCheck, DollarSign, CheckCircle2, X } from "lucide-react";
 import ModalCalificacion from "@/components/ui/ModalCalificacion";
 import { useRouter } from "next/navigation";
@@ -22,6 +22,25 @@ export default function ClienteDashboardPage() {
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [trasladoPendienteId, setTrasladoPendienteId] = useState<number | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    async function revisarEstadoViaje() {
+      // 1. Primero verificamos si tiene un viaje en curso
+      const viajeRes = await verificarViajeActivo();
+      if (viajeRes.success && viajeRes.trasladoId) {
+        router.push(`/viaje/${viajeRes.trasladoId}`);
+        return;
+      }
+
+      // 2. Si no hay viaje activo, revisamos si debe una calificación anterior
+      const califRes = await verificarViajePendienteCalificar(true);
+      if (califRes.success && califRes.trasladoId) {
+        router.push(`/calificar/${califRes.trasladoId}`);
+      }
+    }
+    revisarEstadoViaje();
+  }, [router]);
+
 
   // 3. EFECTO: Al cargar el Dashboard, verificamos si debe una calificación
   // EFECTO: Al cargar el Dashboard, verificamos si debe una calificación

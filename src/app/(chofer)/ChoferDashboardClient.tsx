@@ -8,7 +8,7 @@ import {
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import ModalCalificacion from "@/components/ui/ModalCalificacion";
-import { verificarViajePendienteCalificar } from "@/app/(cliente)/cliente/actions"; // O donde esté la acción
+import { verificarViajeActivo, verificarViajePendienteCalificar } from "@/app/(cliente)/cliente/actions"; // O donde esté la acción
 
 
 interface Vehiculo {
@@ -58,6 +58,26 @@ export default function ChoferDashboardClient({
 
   // 2. ESTADO PARA EL MODAL
   const [trasladoPendienteId, setTrasladoPendienteId] = useState<number | null>(null);
+
+
+  useEffect(() => {
+    if (!choferId) return;
+    async function revisarEstadoViaje() {
+      // 1. Redirigir a pantalla de viaje si está en una carrera activa
+      const viajeRes = await verificarViajeActivo();
+      if (viajeRes.success && viajeRes.trasladoId) {
+        router.push(`/viaje/${viajeRes.trasladoId}`);
+        return;
+      }
+
+      // 2. Redirigir a calificación si tiene una pendiente
+      const califRes = await verificarViajePendienteCalificar(false);
+      if (califRes.success && califRes.trasladoId) {
+        router.push(`/calificar/${califRes.trasladoId}`);
+      }
+    }
+    revisarEstadoViaje();
+  }, [choferId, router]);
 
   // 3. EFECTO AL CARGAR EL DASHBOARD O AL TERMINAR UN VIAJE
   useEffect(() => {
