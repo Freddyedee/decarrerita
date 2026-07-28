@@ -61,7 +61,8 @@ function obtenerEstiloEstado(estado: string) {
     case "APROBADA":
     case "FINALIZADO":
     case "COMPLETADO":
-      return "bg-emerald-100 text-emerald-800 border-emerald-200";
+      // Cambio de emerald a chambray (azul)
+      return "bg-chambray-100 text-chambray-800 border-chambray-200";
     case "PENDIENTE":
     case "SOLICITADO":
     case "ASIGNADO":
@@ -171,7 +172,7 @@ export default function ClienteHistorialClient({
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 pb-4">
         <div>
           <h1 className="text-2xl font-black text-slate-900 flex items-center gap-2">
-            <History className="w-7 h-7 text-[#0E7C86]" /> Mis Movimientos
+            <History className="w-7 h-7 text-chambray-600" /> Mis Movimientos
           </h1>
           <p className="text-sm text-slate-500">
             Consulta el historial de tus viajes solicitados y recargas de saldo.
@@ -184,7 +185,7 @@ export default function ClienteHistorialClient({
             onClick={() => setTabActiva("TRASLADOS")}
             className={`flex-1 md:flex-none px-4 py-2.5 rounded-xl font-extrabold text-xs transition-all flex items-center justify-center gap-2 ${
               tabActiva === "TRASLADOS"
-                ? "bg-white text-[#0E7C86] shadow-sm"
+                ? "bg-white text-chambray-600 shadow-sm"
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
@@ -194,7 +195,7 @@ export default function ClienteHistorialClient({
             onClick={() => setTabActiva("RECARGAS")}
             className={`flex-1 md:flex-none px-4 py-2.5 rounded-xl font-extrabold text-xs transition-all flex items-center justify-center gap-2 ${
               tabActiva === "RECARGAS"
-                ? "bg-white text-[#0E7C86] shadow-sm"
+                ? "bg-white text-chambray-600 shadow-sm"
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
@@ -206,7 +207,7 @@ export default function ClienteHistorialClient({
       {/* Control del Rango de Fechas */}
       <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-2 text-slate-700 font-bold w-full sm:w-auto">
-          <Filter className="w-4 h-4 text-[#0E7C86]" />
+          <Filter className="w-4 h-4 text-chambray-600" />
           <span>Filtrar por periodo:</span>
         </div>
 
@@ -255,7 +256,7 @@ export default function ClienteHistorialClient({
         <>
           {loadingTraslados ? (
             <div className="flex flex-col items-center justify-center py-16">
-              <Loader2 className="w-10 h-10 text-[#0E7C86] animate-spin mb-3" />
+              <Loader2 className="w-10 h-10 text-chambray-600 animate-spin mb-3" />
               <p className="text-slate-400 font-medium text-sm">Consultando tu historial de viajes...</p>
             </div>
           ) : trasladosFiltrados.length > 0 ? (
@@ -303,7 +304,7 @@ export default function ClienteHistorialClient({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center text-xs">
                       <div className="space-y-1.5 text-slate-700">
                         <div className="flex items-center gap-2">
-                          <User className="w-4 h-4 text-[#0E7C86] flex-shrink-0" />
+                          <User className="w-4 h-4 text-chambray-600 flex-shrink-0" />
                           <span className="font-bold">Chofer:</span>
                           <span>
                             {choferUsuario
@@ -333,8 +334,8 @@ export default function ClienteHistorialClient({
                           <div>
                             <div className="flex justify-between items-center mb-1">
                               <span className="text-[11px] font-bold text-slate-500 uppercase">Tu Evaluación</span>
-                              <div className="flex items-center gap-1 bg-amber-100 text-amber-900 px-2 py-0.5 rounded-md font-mono font-black">
-                                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
+                              <div className="flex items-center gap-1 bg-chambray-100 text-chambray-900 px-2 py-0.5 rounded-md font-mono font-black">
+                                <Star className="w-3.5 h-3.5 fill-chambray-400 text-chambray-500" />
                                 <span>{miCalificacion.puntuacion} / 5</span>
                               </div>
                             </div>
@@ -396,7 +397,7 @@ export default function ClienteHistorialClient({
                       <td className="px-6 py-4 font-mono font-bold text-slate-900">
                         {r.referenciaPago}
                       </td>
-                      <td className="px-6 py-4 font-mono font-black text-emerald-600">
+                      <td className="px-6 py-4 font-mono font-black text-chambray-600">
                         +${Number(r.monto).toFixed(2)}
                       </td>
                       <td className="px-6 py-4">

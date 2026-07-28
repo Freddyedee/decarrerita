@@ -15,7 +15,8 @@ import {
   Settings, 
   ShieldCheck,
   Building,
-  CreditCard
+  CreditCard,
+  Database // <-- NUEVO ÍCONO IMPORTADO AQUÍ
 } from "lucide-react";
 
 export function AdminSidebar() {
@@ -59,6 +60,8 @@ export function AdminSidebar() {
       title: "Sistema",
       links: [
         { href: "/configuracion", label: "Configuración", icon: Settings },
+        // <-- NUEVO ENLACE AGREGADO AQUÍ
+        { href: "/reportes-sql", label: "Consultas SQL", icon: Database }, 
       ],
     },
   ];

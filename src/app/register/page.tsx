@@ -2,41 +2,75 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, Mail, Phone, Lock, Car, BadgeCheck } from "lucide-react";
 import Link from "next/link";
-import { NationalId } from "@/modules/user/domain/value-objects";
+import {
+  User,
+  Mail,
+  Phone,
+  Lock,
+  Car,
+  BadgeCheck,
+  Users,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  // Estado para alternar entre roles (Asumiendo: 2 = Cliente, 3 = Chofer)
   const [role, setRole] = useState<2 | 3>(2);
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    nationalId: "",
+    email: "",
+    phone: "",
+    password: "",
+    licenseNumber: "",
+  });
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  // Validaciones
+  const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const validatePhone = (phone: string) => /^\+?[0-9]{7,15}$/.test(phone);
+  const validateNationalId = (id: string) => /^[VvEe]\-\d{7,8}$/.test(id);
+  const isFormValid = () => {
+    const { firstName, lastName, nationalId, email, phone, password, licenseNumber } = formData;
+    if (!firstName || !lastName || !nationalId || !email || !phone || !password) return false;
+    if (!validateEmail(email)) return false;
+    if (!validatePhone(phone)) return false;
+    if (!validateNationalId(nationalId)) return false;
+    if (role === 3 && !licenseNumber) return false;
+    return true;
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (error) setError(null);
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    setTouched((prev) => ({ ...prev, [e.target.name]: true }));
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
-    const formData = new FormData(e.currentTarget);
-    
-    // Construimos el DTO (Data Transfer Object) tal como lo espera tu CreateUserRequest
     const payload: any = {
-      role: role,
-      firstName: formData.get("firstName"),
-      lastName: formData.get("lastName"),
-      NationalId: formData.get("nationalId"), 
-      email: formData.get("email"),
-      phone: formData.get("phone"),
-      password: formData.get("password"), // En un flujo real, esto se hashea en el backend
+      role,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      NationalId: formData.nationalId,
+      email: formData.email,
+      phone: formData.phone,
+      password: formData.password,
     };
 
-    // Si es chofer, agregamos la licencia (obligatoria por tu RN-027)
-    if (role === 3) {
-      payload.licenseNumber = formData.get("licenseNumber");
-      // Opcional: payload.bankId = Number(formData.get("bankId")) si tuvieras un select de bancos
-    }
+    if (role === 3) payload.licenseNumber = formData.licenseNumber;
 
     try {
       const response = await fetch("/api/auth/register", {
@@ -46,15 +80,9 @@ export default function RegisterPage() {
       });
 
       const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Error al registrarse");
 
-      if (!response.ok) {
-        throw new Error(data.message || "Error al registrarse");
-      }
-
-      // ¡Registro exitoso! Redirigimos al login
-      alert("¡Cuenta creada con éxito! Por favor inicia sesión.");
-      router.push("/login");
-
+      router.push("/login?registered=true");
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -63,148 +91,294 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Crea tu cuenta
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          ¿Ya tienes cuenta?{" "}
-          <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
-            Inicia sesión aquí
-          </Link>
-        </p>
+    <div className="min-h-screen flex flex-col justify-center bg-[#F8FAFC] py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden font-sans text-slate-900">
+      
+      {/* Fondo minimalista (Atmósfera sutil) */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] right-[-5%] w-[400px] h-[400px] bg-chambray-100/40 rounded-full mix-blend-multiply filter blur-[100px]"></div>
+        <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-50/50 rounded-full mix-blend-multiply filter blur-[100px]"></div>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-6 shadow-xl rounded-2xl sm:px-10 border border-gray-100">
+      <div className="relative z-10 sm:mx-auto sm:w-full sm:max-w-md animate-slide-up">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+            Crear cuenta
+          </h1>
+          <p className="text-sm text-slate-500 mt-2">
+            Únete a <span className="font-semibold text-slate-700">Decarrerita</span> y comienza a viajar.
+          </p>
+        </div>
+
+        <div className="bg-white py-8 px-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:rounded-2xl sm:px-10 border border-slate-100">
           
-          {/* Selector de Rol */}
-          <div className="flex bg-gray-100 p-1 rounded-xl mb-6">
+          {/* Selector de rol estilizado */}
+          <div className="grid grid-cols-2 gap-3 mb-8">
             <button
               type="button"
               onClick={() => setRole(2)}
-              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
-                role === 2 ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+              className={`relative p-4 rounded-xl border text-left flex flex-col gap-2 transition-all duration-200 ${
+                role === 2
+                  ? "border-slate-900 bg-slate-50 ring-1 ring-slate-900"
+                  : "border-slate-200 hover:border-slate-300 bg-white"
               }`}
             >
-              Soy Cliente
+              <div className="flex justify-between items-center w-full">
+                <Users className={`w-5 h-5 ${role === 2 ? "text-slate-900" : "text-slate-400"}`} />
+                {role === 2 && <CheckCircle2 className="w-5 h-5 text-slate-900" />}
+              </div>
+              <div>
+                <span className={`block text-sm font-semibold ${role === 2 ? "text-slate-900" : "text-slate-600"}`}>
+                  Cliente
+                </span>
+                <span className="block text-[10px] text-slate-500 mt-0.5">Quiero viajar</span>
+              </div>
             </button>
+            
             <button
               type="button"
               onClick={() => setRole(3)}
-              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
-                role === 3 ? "bg-white text-green-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+              className={`relative p-4 rounded-xl border text-left flex flex-col gap-2 transition-all duration-200 ${
+                role === 3
+                  ? "border-emerald-600 bg-emerald-50 ring-1 ring-emerald-600"
+                  : "border-slate-200 hover:border-slate-300 bg-white"
               }`}
             >
-              Soy Chofer
+              <div className="flex justify-between items-center w-full">
+                <Car className={`w-5 h-5 ${role === 3 ? "text-emerald-600" : "text-slate-400"}`} />
+                {role === 3 && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
+              </div>
+              <div>
+                <span className={`block text-sm font-semibold ${role === 3 ? "text-emerald-700" : "text-slate-600"}`}>
+                  Chofer
+                </span>
+                <span className="block text-[10px] text-slate-500 mt-0.5">Quiero conducir</span>
+              </div>
             </button>
           </div>
 
           <form className="space-y-5" onSubmit={handleSubmit}>
             {error && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm font-medium border border-red-100">
-                {error}
+              <div className="flex items-center gap-2 bg-red-50 border border-red-100 text-red-600 p-3 rounded-lg text-sm animate-fade-in">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{error}</span>
               </div>
             )}
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Nombre</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-gray-400" />
+                    <User className="h-4 w-4 text-slate-400" />
                   </div>
-                  <input name="firstName" type="text" required className="pl-10 block w-full rounded-xl border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-50 border p-2.5" placeholder="Juan" />
+                  <input
+                    name="firstName"
+                    type="text"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    required
+                    placeholder="Juan"
+                    className={`block w-full pl-9 pr-3 py-2.5 text-sm border rounded-lg bg-white placeholder-slate-400 transition-shadow ${
+                      touched.firstName && !formData.firstName
+                        ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                        : "border-slate-200 focus:ring-slate-900 focus:border-slate-900"
+                    } focus:outline-none focus:ring-2 focus:ring-offset-0`}
+                  />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Apellido</label>
-                <input name="lastName" type="text" required className="block w-full rounded-xl border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-50 border p-2.5" placeholder="Pérez" />
-              </div>
-            </div>
-
-            {/** CEDULA PRUEBA */}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Cédula de Identidad</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <BadgeCheck className="h-5 w-5 text-gray-400" /> {/* O cualquier icono que prefieras */}
-                </div>
-                <input 
-                  name="nationalId" 
-                  type="text" 
-                  required 
-                  className="pl-10 block w-full rounded-xl border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-50 border p-2.5" 
-                  placeholder="V-12345678" 
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Apellido</label>
+                <input
+                  name="lastName"
+                  type="text"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  required
+                  placeholder="Pérez"
+                  className={`block w-full px-3 py-2.5 text-sm border rounded-lg bg-white placeholder-slate-400 transition-shadow ${
+                    touched.lastName && !formData.lastName
+                      ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                      : "border-slate-200 focus:ring-slate-900 focus:border-slate-900"
+                  } focus:outline-none focus:ring-2 focus:ring-offset-0`}
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Cédula de Identidad</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+                  <BadgeCheck className="h-4 w-4 text-slate-400" />
                 </div>
-                <input name="email" type="email" required className="pl-10 block w-full rounded-xl border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-50 border p-2.5" placeholder="juan@ejemplo.com" />
+                <input
+                  name="nationalId"
+                  type="text"
+                  value={formData.nationalId}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  required
+                  placeholder="V-12345678"
+                  className={`block w-full pl-9 pr-3 py-2.5 text-sm border rounded-lg bg-white placeholder-slate-400 transition-shadow ${
+                    touched.nationalId && !validateNationalId(formData.nationalId)
+                      ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                      : "border-slate-200 focus:ring-slate-900 focus:border-slate-900"
+                  } focus:outline-none focus:ring-2 focus:ring-offset-0`}
+                />
+              </div>
+              {touched.nationalId && !validateNationalId(formData.nationalId) && (
+                <p className="text-xs text-red-500 mt-1.5">El formato debe ser V-12345678</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Correo Electrónico</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-4 w-4 text-slate-400" />
+                </div>
+                <input
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  required
+                  placeholder="juan@ejemplo.com"
+                  className={`block w-full pl-9 pr-3 py-2.5 text-sm border rounded-lg bg-white placeholder-slate-400 transition-shadow ${
+                    touched.email && !validateEmail(formData.email)
+                      ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                      : "border-slate-200 focus:ring-slate-900 focus:border-slate-900"
+                  } focus:outline-none focus:ring-2 focus:ring-offset-0`}
+                />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Teléfono</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Phone className="h-5 w-5 text-gray-400" />
+                  <Phone className="h-4 w-4 text-slate-400" />
                 </div>
-                <input name="phone" type="tel" required className="pl-10 block w-full rounded-xl border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-50 border p-2.5" placeholder="+584141234567" />
+                <input
+                  name="phone"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  required
+                  placeholder="+584141234567"
+                  className={`block w-full pl-9 pr-3 py-2.5 text-sm border rounded-lg bg-white placeholder-slate-400 transition-shadow ${
+                    touched.phone && !validatePhone(formData.phone)
+                      ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                      : "border-slate-200 focus:ring-slate-900 focus:border-slate-900"
+                  } focus:outline-none focus:ring-2 focus:ring-offset-0`}
+                />
               </div>
             </div>
 
-
-
-            {/* CAMPOS DINÁMICOS PARA EL CHOFER */}
             {role === 3 && (
-              <div className="bg-green-50 p-4 rounded-xl border border-green-100 space-y-4 animate-in fade-in zoom-in duration-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <Car className="text-green-600 w-5 h-5" />
-                  <h3 className="font-bold text-green-800 text-sm">Datos del Conductor</h3>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-green-800 mb-1">Número de Licencia</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <BadgeCheck className="h-5 w-5 text-green-500" />
-                    </div>
-                    <input name="licenseNumber" type="text" required={role === 3} className="pl-10 block w-full rounded-xl border-green-200 shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm bg-white border p-2.5" placeholder="V-12345678" />
+              <div className="animate-fade-in">
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Número de Licencia</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <BadgeCheck className="h-4 w-4 text-emerald-500" />
                   </div>
+                  <input
+                    name="licenseNumber"
+                    type="text"
+                    value={formData.licenseNumber}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    required={role === 3}
+                    placeholder="V-12345678"
+                    className="block w-full pl-9 pr-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white placeholder-slate-400 transition-shadow focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
+                  />
                 </div>
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Contraseña</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
+                  <Lock className="h-4 w-4 text-slate-400" />
                 </div>
-                <input name="password" type="password" required className="pl-10 block w-full rounded-xl border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-50 border p-2.5" placeholder="••••••••" />
+                <input
+                  name="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  required
+                  placeholder="••••••••"
+                  className={`block w-full pl-9 pr-3 py-2.5 text-sm border rounded-lg bg-white placeholder-slate-400 transition-shadow ${
+                    touched.password && formData.password.length < 6
+                      ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                      : "border-slate-200 focus:ring-slate-900 focus:border-slate-900"
+                  } focus:outline-none focus:ring-2 focus:ring-offset-0`}
+                />
               </div>
+              {touched.password && formData.password.length > 0 && formData.password.length < 6 && (
+                <p className="text-xs text-red-500 mt-1.5">Mínimo 6 caracteres</p>
+              )}
             </div>
 
             <button
               type="submit"
-              disabled={isLoading}
-              className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white transition-all ${
-                isLoading ? "bg-gray-400 cursor-not-allowed" : role === 3 ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"
+              disabled={isLoading || !isFormValid()}
+              className={`w-full flex items-center justify-center py-3 px-4 rounded-xl text-sm font-medium text-white transition-all duration-200 mt-2 ${
+                isLoading || !isFormValid()
+                  ? "bg-slate-300 cursor-not-allowed"
+                  : role === 3
+                  ? "bg-emerald-600 hover:bg-emerald-700 shadow-sm hover:shadow-md hover:shadow-emerald-600/20"
+                  : "bg-slate-900 hover:bg-slate-800 shadow-sm hover:shadow-md hover:shadow-slate-900/20"
               }`}
             >
-              {isLoading ? "Creando cuenta..." : "Registrarme"}
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Procesando...
+                </>
+              ) : (
+                "Crear cuenta"
+              )}
             </button>
           </form>
+          
+          <div className="mt-6 pt-6 border-t border-slate-100 text-center">
+            <p className="text-sm text-slate-500">
+              ¿Ya tienes una cuenta?{" "}
+              <Link href="/login" className="font-semibold text-slate-900 hover:underline">
+                Inicia sesión
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
+
+      <style jsx>{`
+        .animate-slide-up {
+          animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          opacity: 0;
+        }
+        .animate-fade-in {
+          animation: fadeIn 0.4s ease-out forwards;
+        }
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }
