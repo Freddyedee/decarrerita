@@ -59,7 +59,7 @@ export async function POST(request: Request) {
       lastName,
       email,
       phone,
-      passwordHash: hashedPassword,
+      password: hashedPassword,
     });
 
     return NextResponse.json(
