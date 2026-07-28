@@ -1,0 +1,329 @@
+// src/app/(admin)/reportes-sql/actions.ts
+'use server'
+
+import { prisma } from '@/shared/lib/prisma'
+
+export async function fetchUsuariosAdministrativos() {
+  try {
+    const data = await prisma.$queryRaw`
+      SELECT u.id_usuario, u.nombre, u.apellido, u.email, u.estado, r.nombre AS rol
+      FROM usuario u
+      INNER JOIN rol r ON u.id_rol = r.id_rol
+      WHERE r.nombre = 'Administrador';
+    `
+    
+    const sqlQuery = `SELECT u.id_usuario, u.nombre, u.apellido, u.email, u.estado, r.nombre AS rol
+FROM usuario u
+INNER JOIN rol r ON u.id_rol = r.id_rol
+WHERE r.nombre = 'Administrador';`
+
+    return { success: true, data, sqlQuery }
+  } catch (error) {
+    console.error("Error consultando administrativos:", error)
+    return { success: false, error: 'Error al ejecutar la consulta' }
+  }
+}
+
+export async function fetchGananciasEmpresa() {
+  try {
+    // Calculamos el 30% de la ganancia de los traslados completados
+    const data = await prisma.$queryRaw`
+      SELECT 
+        COUNT(t.id_traslado) as total_viajes,
+        SUM(t.costo_estimado) as monto_bruto_recaudado,
+        SUM(t.costo_estimado * 0.30) AS ganancia_neta_empresa
+      FROM traslado t
+      WHERE t.estado_actual = 'COMPLETADO';
+    `
+    
+    const sqlQuery = `SELECT 
+  COUNT(t.id_traslado) as total_viajes,
+  SUM(t.costo_estimado) as monto_bruto_recaudado,
+  SUM(t.costo_estimado * 0.30) AS ganancia_neta_empresa
+FROM traslado t
+WHERE t.estado_actual = 'COMPLETADO';`
+
+    return { success: true, data, sqlQuery }
+  } catch (error) {
+    console.error("Error consultando ganancias:", error)
+    return { success: false, error: 'Error al ejecutar la consulta' }
+  }
+}
+
+// ADMIN: Choferes y Vehículos Aptos (Evaluaciones)
+export async function fetchChoferesYVehiculosAptos() {
+  try {
+    const data = await prisma.$queryRaw`
+      SELECT 
+        u.nombre AS chofer, 
+        c.licencia, 
+        ep.calificacion AS nota_psicologica,
+        v.placa, 
+        rv.calificacion AS nota_vehiculo
+      FROM chofer c
+      INNER JOIN usuario u ON c.id_usuario = u.id_usuario
+      INNER JOIN evaluacion_psicologica ep ON c.id_usuario = ep.id_chofer
+      INNER JOIN vehiculo v ON c.id_usuario = v.id_chofer
+      INNER JOIN revision_vehicular rv ON v.id_vehiculo = rv.id_vehiculo
+      WHERE ep.calificacion >= 73 AND rv.calificacion >= 65;
+    `
+            const sqlQuery = `SELECT 
+        u.nombre AS chofer, 
+        c.licencia, 
+        ep.calificacion AS nota_psicologica,
+        v.placa, 
+        rv.calificacion AS nota_vehiculo
+        FROM chofer c
+        INNER JOIN usuario u ON c.id_usuario = u.id_usuario
+        INNER JOIN evaluacion_psicologica ep ON c.id_usuario = ep.id_chofer
+        INNER JOIN vehiculo v ON c.id_usuario = v.id_chofer
+        INNER JOIN revision_vehicular rv ON v.id_vehiculo = rv.id_vehiculo
+        WHERE ep.calificacion >= 73 AND rv.calificacion >= 65;`
+
+    return { success: true, data, sqlQuery }
+  } catch (error) {
+    return { success: false, error: 'Error al ejecutar la consulta' }
+  }
+}
+
+// CHOFER: Traslados en un periodo de tiempo
+// src/app/(admin)/reportes-sql/actions.ts
+
+// Actualiza esta función en tu archivo:
+export async function fetchTrasladosChofer(params?: Record<string, string>) {
+  try {
+    // Si no envían parámetros, ponemos unos por defecto para que no falle
+    const choferId = params?.id_chofer || '1';
+    const fechaInicio = params?.fecha_inicio || '2026-01-01';
+    const fechaFin = params?.fecha_fin || '2026-12-31';
+
+    // Construimos el string SQL puro dinámicamente
+    const sqlQuery = `SELECT 
+  id_traslado, 
+  distancia_estimada_km, 
+  costo_estimado, 
+  estado_actual, 
+  fecha_solicitud
+FROM traslado
+WHERE id_chofer = ${choferId} 
+AND fecha_solicitud >= '${fechaInicio} 00:00:00' 
+AND fecha_solicitud <= '${fechaFin} 23:59:59'
+ORDER BY fecha_solicitud DESC;`;
+
+    // Lo ejecutamos tal cual usando Unsafe (ideal para este requerimiento específico)
+    const data = await prisma.$queryRawUnsafe(sqlQuery);
+
+    return { success: true, data, sqlQuery };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: 'Error al ejecutar la consulta' };
+  }
+}
+
+// --- CHOFER: Perfil Completo y Contactos de Emergencia ---
+export async function fetchPerfilChofer(params?: Record<string, string>) {
+  try {
+    const choferId = params?.id_chofer || '1';
+    
+    // Usamos LEFT JOIN para banco por si el chofer aún no ha registrado uno
+    const sqlQuery = `SELECT 
+    u.nombre, 
+    u.apellido, 
+    u.telefono,
+    c.licencia, 
+    c.estado_aprobacion, 
+    b.nombre_banco, 
+    c.numero_cuenta,
+    ce.nombre_contacto AS contacto_emergencia, 
+    ce.telefono_contacto AS tlf_emergencia
+    FROM chofer c
+    INNER JOIN usuario u ON c.id_usuario = u.id_usuario
+    LEFT JOIN banco b ON c.id_banco = b.id_banco
+    LEFT JOIN contacto_emergencia ce ON c.id_usuario = ce.id_chofer
+    WHERE c.id_usuario = ${choferId};`;
+
+    const data = await prisma.$queryRawUnsafe(sqlQuery);
+    return { success: true, data, sqlQuery };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: 'Error al ejecutar la consulta' };
+  }
+}
+
+// --- CHOFER: Cuentas por Cobrar (Viajes completados, 70% de ganancia) ---
+export async function fetchCuentasPorCobrarChofer(params?: Record<string, string>) {
+  try {
+    const choferId = params?.id_chofer || '1';
+    
+    const sqlQuery = `SELECT 
+    t.id_traslado, 
+    t.fecha_solicitud, 
+    t.distancia_estimada_km, 
+    t.costo_estimado AS cobro_total, 
+    (t.costo_estimado * 0.70) AS ganancia_chofer
+    FROM traslado t
+    WHERE t.id_chofer = ${choferId}
+    AND t.estado_actual = 'COMPLETADO'
+    ORDER BY t.fecha_solicitud DESC;`;
+
+    const data = await prisma.$queryRawUnsafe(sqlQuery);
+    return { success: true, data, sqlQuery };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: 'Error al ejecutar la consulta' };
+  }
+}
+
+// --- CLIENTE: Historial de Recargas de Saldo ---
+export async function fetchHistorialRecargasCliente(params?: Record<string, string>) {
+  try {
+    const clienteId = params?.id_cliente || '2';
+    
+    const sqlQuery = `SELECT 
+    r.id_recarga, 
+    r.monto, 
+    r.referencia_pago, 
+    r.estado, 
+    r.fecha_solicitud, 
+    b.nombre_banco
+    FROM recarga r
+    INNER JOIN wallet w ON r.id_wallet = w.id_wallet
+    INNER JOIN banco b ON r.id_banco = b.id_banco
+    WHERE w.id_usuario = ${clienteId}
+    ORDER BY r.fecha_solicitud DESC;`;
+
+    const data = await prisma.$queryRawUnsafe(sqlQuery);
+    return { success: true, data, sqlQuery };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: 'Error al ejecutar la consulta' };
+  }
+}
+
+// --- CLIENTE: Historial de Viajes ---
+export async function fetchHistorialViajesCliente(params?: Record<string, string>) {
+  try {
+    const clienteId = params?.id_cliente || '2';
+    
+    // Usamos LEFT JOIN para el chofer y el vehículo, porque si un viaje fue cancelado 
+    // antes de ser asignado, podría no tener estos datos reales.
+    const sqlQuery = `SELECT 
+  t.id_traslado, 
+  t.fecha_solicitud, 
+  t.distancia_estimada_km, 
+  t.costo_estimado, 
+  t.estado_actual,
+  u.nombre AS chofer_asignado,
+  v.placa AS placa_vehiculo
+FROM traslado t
+LEFT JOIN chofer c ON t.id_chofer = c.id_usuario
+LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
+LEFT JOIN vehiculo v ON t.id_vehiculo = v.id_vehiculo
+WHERE t.id_cliente = ${clienteId}
+ORDER BY t.fecha_solicitud DESC;`;
+
+    const data = await prisma.$queryRawUnsafe(sqlQuery);
+    return { success: true, data, sqlQuery };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: 'Error al ejecutar la consulta' };
+  }
+}
+
+// --- CLIENTE: Detalles del Traslado Asignado (Seguridad) ---
+export async function fetchDetalleTrasladoCliente(params?: Record<string, string>) {
+  try {
+    const trasladoId = params?.id_traslado || '1';
+    
+    // Consulta estricta (INNER JOIN) para extraer los datos de seguridad del chofer y vehículo
+    const sqlQuery = `SELECT 
+  t.id_traslado,
+  t.estado_actual,
+  u.nombre AS chofer_nombre,
+  u.apellido AS chofer_apellido,
+  u.telefono AS chofer_telefono,
+  v.modelo,
+  v.color,
+  v.placa
+FROM traslado t
+INNER JOIN chofer c ON t.id_chofer = c.id_usuario
+INNER JOIN usuario u ON c.id_usuario = u.id_usuario
+INNER JOIN vehiculo v ON t.id_vehiculo = v.id_vehiculo
+WHERE t.id_traslado = ${trasladoId};`;
+
+    const data = await prisma.$queryRawUnsafe(sqlQuery);
+    return { success: true, data, sqlQuery };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: 'Error al ejecutar la consulta' };
+  }
+}
+
+// --- USUARIOS GENERALES: Listado Maestro ---
+export async function fetchTodosLosUsuarios() {
+  try {
+    const sqlQuery = `SELECT 
+  u.id_usuario, 
+  u.nombre, 
+  u.apellido, 
+  u.email, 
+  u.estado, 
+  r.nombre AS rol, 
+  u.fecha_creacion
+FROM usuario u
+INNER JOIN rol r ON u.id_rol = r.id_rol
+ORDER BY u.id_usuario ASC;`;
+
+    const data = await prisma.$queryRawUnsafe(sqlQuery);
+    return { success: true, data, sqlQuery };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: 'Error al ejecutar la consulta' };
+  }
+}
+
+// --- USUARIOS GENERALES: Estado de Wallets ---
+export async function fetchSaldosWallets() {
+  try {
+    const sqlQuery = `SELECT 
+  w.id_wallet, 
+  u.nombre, 
+  u.apellido, 
+  r.nombre AS rol, 
+  w.saldo_disponible, 
+  w.estado_bloqueo 
+FROM wallet w 
+INNER JOIN usuario u ON w.id_usuario = u.id_usuario 
+INNER JOIN rol r ON u.id_rol = r.id_rol 
+ORDER BY w.saldo_disponible DESC;`;
+
+    const data = await prisma.$queryRawUnsafe(sqlQuery);
+    const dataSerializada = JSON.parse(JSON.stringify(data));
+    return { success: true, data: dataSerializada, sqlQuery };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: 'Error al ejecutar la consulta' };
+  }
+}
+
+// --- USUARIOS GENERALES: Auditoría Administrativa ---
+export async function fetchAuditoriaGeneral() {
+  try {
+    const sqlQuery = `SELECT 
+  a.id_auditoria, 
+  u.nombre AS admin_responsable, 
+  a.entidad_afectada, 
+  a.accion, 
+  a.fecha_accion 
+FROM auditoria_administrativa a 
+INNER JOIN usuario u ON a.id_usuario_admin = u.id_usuario 
+ORDER BY a.fecha_accion DESC 
+LIMIT 50;`;
+
+    const data = await prisma.$queryRawUnsafe(sqlQuery);
+    return { success: true, data, sqlQuery };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: 'Error al ejecutar la consulta' };
+  }
+}
