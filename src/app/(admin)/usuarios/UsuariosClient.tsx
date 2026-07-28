@@ -81,7 +81,7 @@ export function UsuariosClient() {
         lastName: apellido.trim(),
         email: email.trim().toLowerCase(),
         phone: telefonoLimpio,
-        passwordHash: password,
+        password: password,
         role: 1,    // 1 representa el rol ADMIN
       };
 

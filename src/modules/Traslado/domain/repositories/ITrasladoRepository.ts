@@ -47,6 +47,12 @@ export interface ITrasladoRepository {
     hasChoferTrasladoEnCurso(choferId: number): Promise<boolean>;
 
     /**
+     * Listado completo de traslados con todos sus detalles (Cliente, Chofer, Vehículo y Calificaciones).
+     * Exclusivo para el panel de administración.
+     */
+    findAllWithDetails(): Promise<any[]>;
+
+    /**
      * Listado de los traslados cancelados (pagados) por la empresa.
      
     findTrasladosPagados(): Promise<any[]>;

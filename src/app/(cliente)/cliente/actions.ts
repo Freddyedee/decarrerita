@@ -2,9 +2,53 @@
 
 import { getCurrentRole } from "@/shared/auth/userCurrentRole";
 import { revalidatePath } from "next/cache";
+import { prisma } from "@/shared/lib/prisma";
 
 // IMPORTANTE: Ajusta esta ruta hacia donde guardaste tu archivo traslado.modules.ts
 import { trasladoController } from "@/modules/Traslado/presentation/traslado.modules";
+
+export async function verificarViajePendienteCalificar(esCliente: boolean) {
+  try {
+    const sesion = await getCurrentRole();
+    if (!sesion || !sesion.usuarioId) {
+      return { success: false, trasladoId: null };
+    }
+
+    const usuarioId = sesion.usuarioId;
+
+    // Buscamos un traslado completado donde este usuario participó
+    // y donde AÚN NO exista una calificación con su rol (esCliente: true/false)
+    const viajePendiente = await prisma.traslado.findFirst({
+      where: {
+        ...(esCliente ? { id_cliente: usuarioId } : { id_chofer: usuarioId }),
+        estado_actual: {
+          in: ["FINALIZADO", "COMPLETADO"],
+        },
+        // Clave: solo filtra que NO exista una calificación del rol actual
+        calificacion: {
+          none: {
+            calificador_es_cliente: esCliente,
+          },
+        },
+      },
+      orderBy: {
+        fecha_solicitud: "desc",
+      },
+      select: {
+        id_traslado: true,
+      },
+    });
+
+    if (viajePendiente) {
+      return { success: true, trasladoId: viajePendiente.id_traslado };
+    }
+
+    return { success: true, trasladoId: null };
+  } catch (error) {
+    console.error("❌ [ERROR VERIFICANDO PENDIENTES]:", error);
+    return { success: false, trasladoId: null };
+  }
+}
 
 export async function solicitarNuevoTraslado(formData: FormData) {
   try {

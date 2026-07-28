@@ -10,6 +10,7 @@ import { CreateUserUseCase } from "../../application/use-cases/CreateUserUseCase
 import { GetUserByIdUseCase } from "../../application/use-cases/GetUserByIdUseCase";
 import { UpdateUserStatusUseCase } from "../../application/use-cases/UpdateUserStatusUseCase";
 import { UpdateUserProfileUseCase } from "../../application/use-cases/UpdateUserProfileUseCase";
+import { BcryptPasswordHasher } from "@/modules/auth/infrastructure/services/BcryptPasswordHasher";
 // 1. IMPORTAMOS EL CASO DE USO FALTANTE
 import { GetAllUsersUseCase } from "../../application/use-cases/GetAllUsersUseCase"; 
 
@@ -22,6 +23,7 @@ const clientRepository = new PrismaClientRepository(prisma);
 const driverRepository = new PrismaDriverRepository(prisma);
 const transactionManager = new PrismaTransactionManager(); 
 const bancoRepository = new BancoRepository(prisma);
+const passwordHasher = new BcryptPasswordHasher();
 
 // 4. SE LOS PASAMOS AL CASO DE USO EN EL ORDEN EXACTO
 const createUserUseCase = new CreateUserUseCase(
@@ -29,7 +31,8 @@ const createUserUseCase = new CreateUserUseCase(
     clientRepository,
     driverRepository,
     transactionManager,
-    bancoRepository
+    bancoRepository,
+    passwordHasher
 );
 
 const getUserByIdUseCase = new GetUserByIdUseCase(userRepository);

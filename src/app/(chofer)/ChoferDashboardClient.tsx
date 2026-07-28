@@ -7,7 +7,8 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-
+import ModalCalificacion from "@/components/ui/ModalCalificacion";
+import { verificarViajePendienteCalificar } from "@/app/(cliente)/cliente/actions"; // O donde esté la acción
 
 
 interface Vehiculo {
@@ -54,6 +55,22 @@ export default function ChoferDashboardClient({
   const [oferta, setOferta] = useState<OfertaViaje | null>(null);
   const [viajeActivo, setViajeActivo] = useState<ViajeActivo | null>(null);
   const [procesandoAccion, setProcesandoAccion] = useState(false);
+
+  // 2. ESTADO PARA EL MODAL
+  const [trasladoPendienteId, setTrasladoPendienteId] = useState<number | null>(null);
+
+  // 3. EFECTO AL CARGAR EL DASHBOARD O AL TERMINAR UN VIAJE
+  useEffect(() => {
+    if (!choferId) return;
+    async function revisarPendientes() {
+      const res = await verificarViajePendienteCalificar(false);
+      if (res.success && res.trasladoId) {
+        
+        router.push(`/calificar/${res.trasladoId}`);
+      }
+    }
+    revisarPendientes();
+  }, [choferId, router]);
 
   // Cargar vehículos para el modal
   useEffect(() => {
@@ -189,6 +206,15 @@ export default function ChoferDashboardClient({
   return (
     // ¡AQUÍ ESTÁ EL ARREGLO VISUAL! pt-16 sm:pt-20 empuja todo hacia abajo de la cabecera fija
     <div className="max-w-4xl mx-auto w-full p-4 sm:p-6 pt-16 sm:pt-20 space-y-8 min-h-screen flex flex-col justify-between">
+
+      {/* 4. INYECCIÓN DEL MODAL PARA EL CHOFER */}
+      {trasladoPendienteId !== null && (
+        <ModalCalificacion
+          trasladoId={trasladoPendienteId}
+          calificadorEsCliente={false} // Es el chofer calificando al cliente
+          onClose={() => setTrasladoPendienteId(null)}
+        />
+      )}
       
       {/* Cabecera del Radar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">

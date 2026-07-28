@@ -9,6 +9,7 @@ import { ResponderAsignacionUseCase } from "../application/use-cases/ResponderAs
 import { IniciarTrasladoUseCase } from "../application/use-cases/IniciarTrasladoUseCase";
 import { CompletarTrasladoUseCase } from "../application/use-cases/CompletarTrasladoUseCase";
 import { CancelarTrasladoUseCase } from "../application/use-cases/CancelarTrasladoUseCase";
+import { GetAllTrasladosUseCase } from "../application/use-cases/GetAllTrasladosUseCase";
 
 import { ITrasladoRepository } from "../domain/repositories/ITrasladoRepository";
 
@@ -20,6 +21,7 @@ export class TrasladoController {
         private readonly iniciarTrasladoUseCase: IniciarTrasladoUseCase,
         private readonly completarTrasladoUseCase: CompletarTrasladoUseCase,
         private readonly cancelarTrasladoUseCase: CancelarTrasladoUseCase,
+        private readonly getAllTrasladosUseCase: GetAllTrasladosUseCase,
         private readonly trasladoRepository: ITrasladoRepository
     ) {}
 
@@ -53,5 +55,9 @@ export class TrasladoController {
 
     async getByChofer(choferId: number) {
         return this.trasladoRepository.findByChoferId(choferId);
+    }
+
+    async getAll() {
+        return await this.getAllTrasladosUseCase.execute();
     }
 }

@@ -19,3 +19,7 @@ CREATE TABLE usuario (
 SELECT *  FROM usuario;
 
 UPDATE usuario SET password_hash = '$2b$10$t5xoS6LN8XUUsicRuYcu7.cETwdztCsL9tBNcBOoGvPolVZdlDTLW' WHERE id_usuario = 1;
+
+SELECT event_object_table, trigger_name, event_manipulation, action_statement 
+FROM information_schema.triggers 
+WHERE event_object_table = 'usuario';

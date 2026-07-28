@@ -5,6 +5,9 @@ import MapaWrapper from "@/components/cliente/MapaWrapper";
 import { DatosRuta } from "@/components/cliente/MapaTraslado";
 import { solicitarNuevoTraslado, cotizarViaje } from "./actions";
 import { Car, Loader2, MapPin, Navigation, ShieldCheck, DollarSign, CheckCircle2, X } from "lucide-react";
+import ModalCalificacion from "@/components/ui/ModalCalificacion";
+import { useRouter } from "next/navigation";
+import { verificarViajePendienteCalificar } from "./actions"; // o la ruta donde la pusiste
 
 export default function ClienteDashboardPage() {
   const [datosRuta, setDatosRuta] = useState<DatosRuta>({
@@ -17,6 +20,21 @@ export default function ClienteDashboardPage() {
   const [loadingCotizacion, setLoadingCotizacion] = useState(false);
   const [loadingSolicitud, setLoadingSolicitud] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [trasladoPendienteId, setTrasladoPendienteId] = useState<number | null>(null);
+  const router = useRouter();
+
+  // 3. EFECTO: Al cargar el Dashboard, verificamos si debe una calificación
+  // EFECTO: Al cargar el Dashboard, verificamos si debe una calificación
+  useEffect(() => {
+    async function revisarPendientes() {
+      const res = await verificarViajePendienteCalificar(true); 
+      if (res.success && res.trasladoId) {
+        //Lo redirigimos a la página dedicada de calificación
+        router.push(`/calificar/${res.trasladoId}`);
+      }
+    }
+    revisarPendientes();
+  }, [router]);
 
   // EFECTO: Cada vez que el mapa traza una ruta nueva (> 0 km), cotizamos automáticamente
   useEffect(() => {
@@ -67,6 +85,14 @@ export default function ClienteDashboardPage() {
 
   return (
     <div className="flex flex-col h-full gap-6 lg:flex-row">
+      {/* 4. INYECCIÓN DEL MODAL FLOTANTE (Si hay viaje pendiente, bloquea la pantalla hasta calificar) */}
+      {trasladoPendienteId !== null && (
+        <ModalCalificacion
+          trasladoId={trasladoPendienteId}
+          calificadorEsCliente={true} // Es el cliente calificando
+          onClose={() => setTrasladoPendienteId(null)} // Al terminar, se oculta el modal y puede pedir taxis
+        />
+      )}
       {/* Columna Izquierda: Controles y Tarjeta de Cotización */}
       <div className="flex w-full flex-col gap-6 lg:w-1/3">
         <div>

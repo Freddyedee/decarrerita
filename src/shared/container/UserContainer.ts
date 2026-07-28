@@ -30,6 +30,7 @@ import { ClientController } from "../../modules/user/presentation/controllers/Cl
 import { DriverController } from "../../modules/user/presentation/controllers/DriverController";
 import { PsychologicalEvaluationController } from "../../modules/user/presentation/controllers/PsychologicalEvaluationController";
 import { EmergencyContactController } from "../../modules/user/presentation/controllers/EmergencyContactController";
+import { BcryptPasswordHasher } from "@/modules/auth/infrastructure/services/BcryptPasswordHasher";
 
 import { PrismaTransactionManager } from "../infrastructure/PrismaTransactionManager";
 import { prisma } from "../lib/prisma";
@@ -55,7 +56,7 @@ export class UserContainer {
     public static readonly psychologicalEvaluationRepository = new PrismaPsychologicalEvaluationRepository(prisma);
     public static readonly emergencyContactRepository = new PrismaEmergencyContactRepository(prisma);
 
-    
+    public static readonly passwordHasher = new BcryptPasswordHasher();
     // NUESTRO APORTE: Inicializamos el repositorio de Bancos
     public static readonly bancoRepository = new BancoRepository(prisma);
     // ============================
@@ -69,6 +70,7 @@ export class UserContainer {
         this.driverRepository,
         this.transactionManager,
         this.bancoRepository, 
+        this.passwordHasher
     );
 
     public static readonly getUserByIdUseCase = new GetUserByIdUseCase(this.userRepository);

@@ -25,14 +25,16 @@ import { tarifaRepository } from "@/modules/Tarifa/presentation/tarifa.modules";
 import { walletService } from "@/modules/wallet/presentation/wallet.modules";
 import { transactionManager } from "@/shared/infrastructure/shared.modules";
 
-// Estas dependen de cómo tu compañero exporte sus repositorios
-// concretos — ajusta el import si el nombre real difiere.
+
 import { PrismaClientRepository } from "@/modules/user/infrastructure/repositories/PrismaClientRepository";
 import { PrismaDriverRepository } from "@/modules/user/infrastructure/repositories/PrismaDriverRepository";
+
+import { GetAllTrasladosUseCase } from "../application/use-cases/GetAllTrasladosUseCase";
 
 
 const clientRepository = new PrismaClientRepository(prisma);
 const driverRepository = new PrismaDriverRepository(prisma);
+const getAllTrasladosUseCase = new GetAllTrasladosUseCase(trasladoRepository);
 
 import { VehicleRepository } from "@/modules/vehicles/infrastructure/prisma/vehicle.repository";
 const vehicleRepositoryForAsignacion = new VehicleRepository();
@@ -62,6 +64,7 @@ const cancelarTrasladoUseCase = new CancelarTrasladoUseCase(
 export const trasladoController = new TrasladoController(
     solicitarTrasladoUseCase, responderAsignacionUseCase,
     iniciarTrasladoUseCase, completarTrasladoUseCase, cancelarTrasladoUseCase,
+    getAllTrasladosUseCase,
     trasladoRepository
 );
 

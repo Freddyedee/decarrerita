@@ -1,25 +1,22 @@
-
 import { NextResponse } from "next/server";
 import { UserContainer } from "@/shared/container/UserContainer";
 import { UserRole } from "@/modules/user/domain/enums/UserRole";
-import bcrypt from "bcrypt"; // O 'bcryptjs' si tienes problemas en el entorno Edge de Next.js
+// <-- ELIMINADO: import bcrypt from "bcrypt"; ¡Ya no se necesita aquí!
 
 export async function POST(request: Request) {
   try {
-    // 1. Parseo de los datos enviados desde el frontend o cURL
     const body = await request.json();
     const { 
-      role, // Puede venir como string "CLIENT" o número 1
+      role, 
       firstName, 
       lastName, 
       email, 
       phone, 
-      password, // Contraseña en texto plano
+      password, 
       licenseNumber, 
       bankId 
     } = body;
 
-    // 2. Validación de campos base obligatorios
     if (!role || !firstName || !lastName || !email || !phone || !password) {
       return NextResponse.json(
         { success: false, message: "Faltan campos obligatorios para el registro base." },
@@ -27,15 +24,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // 3. Mapeo y validación estricta de Roles (Bloqueo de ADMIN y STAFF)
     let assignedRole: UserRole;
 
     if (role === "CLIENTE" || role === UserRole.CLIENT) {
       assignedRole = UserRole.CLIENT;
     } else if (role === "CHOFER" || role === UserRole.DRIVER) {
       assignedRole = UserRole.DRIVER;
-      
-      // Validaciones tempranas específicas para el chofer
       if (!licenseNumber) {
         return NextResponse.json(
           { success: false, message: "La licencia es obligatoria para registrar un chofer." },
@@ -45,27 +39,24 @@ export async function POST(request: Request) {
     } else {
       return NextResponse.json(
         { success: false, message: "Rol inválido o no permitido en esta ruta pública." },
-        { status: 403 } // 403 Forbidden para evitar creación de Admins
+        { status: 403 }
       );
     }
 
-    // 4. Encriptación de la contraseña (Capa de Presentación / Controlador)
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    // <-- ELIMINADO: Todo el bloque de saltRounds y bcrypt.hash
 
-    // 5. Ejecución del Caso de Uso Único
+    // Ejecución del Caso de Uso Único (Pasando el password limpio)
     const result = await UserContainer.createUserUseCase.execute({
       role: assignedRole,
       firstName,
       lastName,
       email,
       phone,
-      passwordHash: hashedPassword,
+      password, // <-- Pasamos directamente la variable password en texto plano
       licenseNumber: assignedRole === UserRole.DRIVER ? licenseNumber : undefined,
       bankId: assignedRole === UserRole.DRIVER ? bankId : undefined,
     });
 
-    // 6. Respuesta exitosa
     return NextResponse.json(
       { 
         success: true, 
@@ -78,12 +69,10 @@ export async function POST(request: Request) {
   } catch (error: unknown) {
     console.error("[AUTH REGISTER ERROR]:", error);
     
-    // 1. Verificamos de forma segura si el error es una instancia nativa de Error
     const errorMessage = error instanceof Error 
       ? error.message 
       : "Ocurrió un error interno al procesar el registro.";
 
-    // 2. Detectamos si es un error de regla de negocio de tu dominio
     const isConflict = errorMessage.toLowerCase().includes("already exists");
     
     return NextResponse.json(
