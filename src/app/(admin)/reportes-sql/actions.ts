@@ -24,29 +24,49 @@ WHERE r.nombre = 'Administrador';`
   }
 }
 
-export async function fetchGananciasEmpresa() {
+export async function fetchGananciasEmpresa(params?: Record<string, string>) {
   try {
-    // Calculamos el 30% de la ganancia de los traslados completados
-    const data = await prisma.$queryRaw`
-      SELECT 
-        COUNT(t.id_traslado) as total_viajes,
-        SUM(t.costo_estimado) as monto_bruto_recaudado,
-        SUM(t.costo_estimado * 0.30) AS ganancia_neta_empresa
-      FROM traslado t
-      WHERE t.estado_actual = 'COMPLETADO';
-    `
-    
-    const sqlQuery = `SELECT 
-  COUNT(t.id_traslado) as total_viajes,
-  SUM(t.costo_estimado) as monto_bruto_recaudado,
-  SUM(t.costo_estimado * 0.30) AS ganancia_neta_empresa
-FROM traslado t
-WHERE t.estado_actual = 'COMPLETADO';`
+    const fechaInicio = params?.fecha_inicio || '2026-07-01';
+    const fechaFin = params?.fecha_fin || '2026-07-28';
 
-    return { success: true, data, sqlQuery }
+    // Usamos exactamente la lógica transaccional de tus logs con CTE
+    const sqlQuery = `
+WITH target_wallet AS (
+    SELECT w.id_wallet
+    FROM wallet w
+    INNER JOIN usuario u ON w.id_usuario = u.id_usuario
+    INNER JOIN rol r ON u.id_rol = r.id_rol
+    WHERE r.nombre = 'Sistema'
+    LIMIT 1 
+),
+ultimo_antes AS (
+    SELECT saldo_posterior
+    FROM movimiento_wallet
+    WHERE id_wallet = (SELECT id_wallet FROM target_wallet)
+        AND fecha_movimiento < '${fechaInicio} 00:00:00'
+    ORDER BY fecha_movimiento DESC
+    LIMIT 1
+),
+ultimo_dentro AS (
+    SELECT saldo_posterior
+    FROM movimiento_wallet
+    WHERE id_wallet = (SELECT id_wallet FROM target_wallet)
+        AND fecha_movimiento >= '${fechaInicio} 00:00:00'
+        AND fecha_movimiento <= '${fechaFin} 23:59:59'
+    ORDER BY fecha_movimiento DESC 
+    LIMIT 1
+)
+SELECT (
+    COALESCE((SELECT saldo_posterior FROM ultimo_dentro), COALESCE((SELECT saldo_posterior FROM ultimo_antes), 0))
+    -
+    COALESCE((SELECT saldo_posterior FROM ultimo_antes), 0)
+) AS "ganancia_neta_empresa";`;
+
+    const data = await prisma.$queryRawUnsafe(sqlQuery);
+    return { success: true, data: JSON.parse(JSON.stringify(data)), sqlQuery };
   } catch (error) {
-    console.error("Error consultando ganancias:", error)
-    return { success: false, error: 'Error al ejecutar la consulta' }
+    console.error("Error consultando ganancias:", error);
+    return { success: false, error: 'Error al ejecutar la consulta' };
   }
 }
 
@@ -151,23 +171,33 @@ export async function fetchPerfilChofer(params?: Record<string, string>) {
 }
 
 // --- CHOFER: Cuentas por Cobrar (Viajes completados, 70% de ganancia) ---
-export async function fetchCuentasPorCobrarChofer(params?: Record<string, string>) {
+export async function fetchPagadoAChofer(params?: Record<string, string>) {
   try {
-    const choferId = params?.id_chofer || '1';
+    const choferId = params?.id_chofer || '14'; // Usando el ID de tus logs
+    const fechaInicio = params?.fecha_inicio || '2026-07-01';
+    const fechaFin = params?.fecha_fin || '2026-07-28';
     
+    // Consultamos la tabla solicitud_retiro enlazada con banco y wallet 
+    // tal como lo hace tu ruta /api/reportes/pagado-chofer/[id]
     const sqlQuery = `SELECT 
-    t.id_traslado, 
-    t.fecha_solicitud, 
-    t.distancia_estimada_km, 
-    t.costo_estimado AS cobro_total, 
-    (t.costo_estimado * 0.70) AS ganancia_chofer
-    FROM traslado t
-    WHERE t.id_chofer = ${choferId}
-    AND t.estado_actual = 'COMPLETADO'
-    ORDER BY t.fecha_solicitud DESC;`;
+    sr.id_retiro, 
+    sr.monto, 
+    sr.numero_cuenta, 
+    sr.titular_cuenta, 
+    sr.estado, 
+    sr.fecha_procesamiento, 
+    b.nombre_banco
+    FROM solicitud_retiro sr
+    INNER JOIN wallet w ON sr.id_wallet = w.id_wallet
+    INNER JOIN banco b ON sr.id_banco = b.id_banco
+    WHERE w.id_usuario = ${choferId} 
+    AND sr.estado = 'APROBADO'
+    AND sr.fecha_solicitud >= '${fechaInicio} 00:00:00' 
+    AND sr.fecha_solicitud <= '${fechaFin} 23:59:59'
+    ORDER BY sr.fecha_solicitud DESC;`;
 
     const data = await prisma.$queryRawUnsafe(sqlQuery);
-    return { success: true, data, sqlQuery };
+    return { success: true, data: JSON.parse(JSON.stringify(data)), sqlQuery };
   } catch (error) {
     console.error(error);
     return { success: false, error: 'Error al ejecutar la consulta' };

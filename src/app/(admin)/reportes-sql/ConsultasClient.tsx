@@ -6,7 +6,7 @@ import {
   fetchGananciasEmpresa,
   fetchChoferesYVehiculosAptos,
   fetchTrasladosChofer,
-  fetchCuentasPorCobrarChofer,
+  fetchPagadoAChofer,
   fetchPerfilChofer,
   fetchHistorialRecargasCliente,
   fetchHistorialViajesCliente,
@@ -171,7 +171,7 @@ export default function ConsultasClient() {
                 justificacion:
                   "Se filtran los traslados con estado 'COMPLETADO'. Se calcula dinámicamente el 70% del 'costo_estimado' (costo_estimado * 0.70) para mostrar la ganancia real que la empresa le adeuda al conductor.",
                 inputs: [{ name: 'id_chofer', label: 'ID del Chofer', type: 'number', defaultValue: '1' }],
-                fetchFn: fetchCuentasPorCobrarChofer,
+                fetchFn: fetchPagadoAChofer,
               }}
             />
           </div>
