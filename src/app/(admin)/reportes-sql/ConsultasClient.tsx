@@ -14,7 +14,8 @@ import {
   fetchAuditoriaGeneral,
   fetchSaldosWallets,
   fetchTodosLosUsuarios,
-  fetchTrasladosCanceladosChofer
+  fetchTrasladosCanceladosChofer,
+  fetchTodasSolicitudesRetiro
 } from './actions'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -103,6 +104,18 @@ export default function ConsultasClient() {
                 fetchFn: fetchChoferesYVehiculosAptos,
               }}
             />
+
+              <ConsultaCard
+  consulta={{
+    titulo: 'Gestión de Pagos a Choferes (Solicitudes de Retiro)',
+    descripcion: 'Listado general de todas las solicitudes de retiro de fondos realizadas por los choferes para ser procesadas (canceladas) por el personal administrativo.',
+    justificacion:
+      "Se cruzan las tablas 'solicitud_retiro', 'wallet', 'usuario' y 'banco'. A diferencia de Prisma (que hace múltiples consultas separadas por culpa de su ORM), este script consolida todo en una sola vista eficiente mediante INNER JOIN, permitiendo al administrador ver inmediatamente quién pide el pago, el monto, el banco y el estado actual.",
+    inputs: [], // No requiere inputs ya que muestra el listado general de todos
+    fetchFn: fetchTodasSolicitudesRetiro,
+  }}
+/>
+            
           </div>
         )}
 
@@ -136,6 +149,7 @@ export default function ConsultasClient() {
                 fetchFn: fetchAuditoriaGeneral,
               }}
             />
+
           </div>
         )}
 

@@ -382,3 +382,29 @@ export async function fetchTrasladosCanceladosChofer(params?: Record<string, str
     return { success: false, error: 'Error al ejecutar la consulta' };
   }
 }
+
+// --- ADMINISTRATIVO: Gestión de Solicitudes de Pago (Retiros) ---
+export async function fetchTodasSolicitudesRetiro() {
+  try {
+    const sqlQuery = `SELECT 
+      sr.id_retiro, 
+      u.nombre AS chofer_nombre, 
+      u.apellido AS chofer_apellido,
+      sr.monto, 
+      sr.estado, 
+      sr.fecha_solicitud, 
+      b.nombre_banco,
+      sr.numero_cuenta
+    FROM solicitud_retiro sr
+    INNER JOIN wallet w ON sr.id_wallet = w.id_wallet
+    INNER JOIN usuario u ON w.id_usuario = u.id_usuario
+    INNER JOIN banco b ON sr.id_banco = b.id_banco
+    ORDER BY sr.fecha_solicitud DESC;`;
+
+    const data = await prisma.$queryRawUnsafe(sqlQuery);
+    return { success: true, data: JSON.parse(JSON.stringify(data)), sqlQuery };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: 'Error al ejecutar la consulta' };
+  }
+}
