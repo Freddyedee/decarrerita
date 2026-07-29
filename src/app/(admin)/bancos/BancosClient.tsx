@@ -152,13 +152,11 @@ export function BancosClient() {
             )}
           </div>
 
-          <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
-            <DialogTrigger>
-                  <Button className="bg-teal-600 hover:bg-teal-700 text-white shadow-sm">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Agregar Banco
-                  </Button>
-                </DialogTrigger>
+         <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
+            <DialogTrigger className="inline-flex items-center justify-center rounded-md bg-teal-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-teal-700 transition-colors">
+              <Plus className="w-4 h-4 mr-2" />
+              Agregar Banco
+            </DialogTrigger>
 
                 <DialogPortal>
                 <DialogContent key = {dialogKey} className="fixed left-[50%] top-[50%] z-50 w-full max-w-[500px] translate-x-[-50%] translate-y-[-50%] gap-4 border border-slate-200 bg-white p-6 shadow-xl duration-200 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-90 data-[state=open]:slide-in-from-bottom-5 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-90 data-[state=closed]:slide-out-to-bottom-5 sm:rounded-lg">              <DialogHeader>

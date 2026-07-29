@@ -2,9 +2,14 @@
 
 import { useState } from 'react'
 import {
-  fetchUsuariosAdministrativos,
-  fetchGananciasEmpresa,
-  fetchChoferesYVehiculosAptos,
+  
+  fetchControlEvaluaciones,
+  fetchDirectorioUsuarios,
+  fetchMonitorTrasladosGlobal,
+  fetchEstadoFlota,
+  fetchHistorialTarifas,
+  fetchValidacionRecargas,
+
   fetchTrasladosChofer,
   fetchPagadoAChofer,
   fetchPerfilChofer,
@@ -15,7 +20,8 @@ import {
   fetchSaldosWallets,
   fetchTodosLosUsuarios,
   fetchTrasladosCanceladosChofer,
-  fetchTodasSolicitudesRetiro
+  fetchTodasSolicitudesRetiro,
+  fetchPerfilYSaldoCliente
 } from './actions'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -75,49 +81,81 @@ export default function ConsultasClient() {
       {/* Contenido dinámico */}
       <div className="mt-6">
         {activeTab === 'administrativo' && (
-          <div className="space-y-8 animate-in fade-in duration-300">
-            <ConsultaCard
-              consulta={{
-                titulo: 'Ganancias Netas de la Empresa',
-                descripcion: 'Calcula lo recaudado por la empresa (30% del precio de cada traslado) para todos los viajes completados.',
-                justificacion:
-                  "Se consulta directamente la tabla 'traslado' filtrando por estado 'COMPLETADO'. Se utiliza la función de agregación SUM() multiplicada por 0.30 para extraer el 30% exacto que corresponde a la empresa, cumpliendo con la regla de negocio del documento.",
-                fetchFn: fetchGananciasEmpresa,
-              }}
-            />
-            <ConsultaCard
-              consulta={{
-                titulo: 'Listado de Personal Administrativo',
-                descripcion: 'Muestra todos los usuarios que tienen privilegios de administración en el sistema.',
-                justificacion:
-                  "Se implementó un INNER JOIN entre las tablas 'usuario' y 'rol'. Esto es necesario porque la tabla usuario solo almacena la clave foránea 'id_rol', y requerimos filtrar por el nombre en texto ('Administrador') que reside en la tabla rol.",
-                fetchFn: fetchUsuariosAdministrativos,
-              }}
-            />
-            <ConsultaCard
-              consulta={{
-                titulo: 'Evaluaciones Aprobatorias (Choferes y Vehículos)',
-                descripcion:
-                  'Muestra los choferes y sus vehículos que han aprobado la evaluación psicológica (>= 73) y la revisión vehicular (>= 65).',
-                justificacion:
-                  "Se emplean múltiples INNER JOIN para conectar al chofer con el usuario (para el nombre), con sus evaluaciones psicológicas, con sus vehículos asignados y con las revisiones de dichos vehículos. Se aplican las restricciones en la cláusula WHERE exigidas en el requerimiento del proyecto.",
-                fetchFn: fetchChoferesYVehiculosAptos,
-              }}
-            />
+  <div className="space-y-8 animate-in fade-in duration-300">
+    
+    <ConsultaCard
+      consulta={{
+        titulo: 'Directorio General de Usuarios',
+        descripcion: 'Listado maestro de todos los usuarios registrados en el sistema.',
+        justificacion: "Se une la tabla 'usuario' con 'rol' mediante INNER JOIN para traducir el 'id_rol' al nombre real del rol, optimizando la lectura de datos en una sola consulta.",
+        inputs: [],
+        fetchFn: fetchDirectorioUsuarios,
+      }}
+    />
 
-              <ConsultaCard
-  consulta={{
-    titulo: 'Gestión de Pagos a Choferes (Solicitudes de Retiro)',
-    descripcion: 'Listado general de todas las solicitudes de retiro de fondos realizadas por los choferes para ser procesadas (canceladas) por el personal administrativo.',
-    justificacion:
-      "Se cruzan las tablas 'solicitud_retiro', 'wallet', 'usuario' y 'banco'. A diferencia de Prisma (que hace múltiples consultas separadas por culpa de su ORM), este script consolida todo en una sola vista eficiente mediante INNER JOIN, permitiendo al administrador ver inmediatamente quién pide el pago, el monto, el banco y el estado actual.",
-    inputs: [], // No requiere inputs ya que muestra el listado general de todos
-    fetchFn: fetchTodasSolicitudesRetiro,
-  }}
-/>
-            
-          </div>
-        )}
+    <ConsultaCard
+      consulta={{
+        titulo: 'Monitor Global de Traslados',
+        descripcion: 'Supervisión de todos los viajes, enlazando cliente, chofer y vehículo.',
+        justificacion: "El ORM original requería 5 consultas separadas para mapear estas entidades. Este script SQL utiliza múltiples LEFT JOIN hacia la tabla 'usuario' (para cliente y chofer) y 'vehiculo' consolidando todo en un solo viaje al servidor.",
+        inputs: [],
+        fetchFn: fetchMonitorTrasladosGlobal,
+      }}
+    />
+
+    <ConsultaCard
+      consulta={{
+        titulo: 'Control de Evaluaciones Psicológicas',
+        descripcion: 'Historial de evaluaciones de los choferes y su estado de aprobación.',
+        justificacion: "Se cruzan las tablas 'evaluacion_psicologica', 'chofer' y 'usuario'. Permite al personal administrativo auditar las fechas de vencimiento y las calificaciones que definen si un chofer puede operar.",
+        inputs: [],
+        fetchFn: fetchControlEvaluaciones,
+      }}
+    />
+
+    <ConsultaCard
+      consulta={{
+        titulo: 'Gestión de Flota y Vencimientos',
+        descripcion: 'Inventario de vehículos, sus marcas y el estatus de su última revisión.',
+        justificacion: "Integra 'vehiculo', 'marca', 'usuario' y hace un LEFT JOIN con 'revision_vehicular' para asegurar que los vehículos sin revisión aún aparezcan en el reporte, permitiendo una gestión de flota integral.",
+        inputs: [],
+        fetchFn: fetchEstadoFlota,
+      }}
+    />
+
+    <ConsultaCard
+      consulta={{
+        titulo: 'Validación de Recargas de Saldo',
+        descripcion: 'Auditoría de recargas de los clientes cruzando los datos bancarios.',
+        justificacion: "Sustituye 4 consultas aisladas del ORM por un INNER JOIN robusto entre 'recarga', 'wallet', 'usuario' y 'banco', garantizando la consistencia ACID al revisar referencias de pago.",
+        inputs: [],
+        fetchFn: fetchValidacionRecargas,
+      }}
+    />
+
+    <ConsultaCard
+      consulta={{
+        titulo: 'Historial de Tarifas del Sistema',
+        descripcion: 'Registro de las comisiones y tarifas base configuradas en el tiempo.',
+        justificacion: "Consulta directa a la tabla 'tarifa' ordenada por fecha de inicio de vigencia para mantener el control administrativo sobre las fluctuaciones de precios y el porcentaje de comisión.",
+        inputs: [],
+        fetchFn: fetchHistorialTarifas,
+      }}
+    />
+
+    <ConsultaCard
+      consulta={{
+        titulo: 'Gestión de Pagos a Choferes (Retiros)',
+        descripcion: 'Listado de solicitudes de retiro de fondos realizadas por los choferes.',
+        justificacion: "Cruza 'solicitud_retiro', 'wallet', 'usuario' y 'banco'. Muestra en una sola vista quién pide el pago, el monto, el banco y el estado actual de la transacción financiera.",
+        inputs: [],
+        fetchFn: fetchTodasSolicitudesRetiro,
+      }}
+    />
+    
+
+  </div>
+)}
 
         {activeTab === 'usuarios' && (
           <div className="space-y-8 animate-in fade-in duration-300">
@@ -209,40 +247,52 @@ export default function ConsultasClient() {
   </div>
 )}
         {activeTab === 'cliente' && (
-          <div className="space-y-8 animate-in fade-in duration-300">
-            <ConsultaCard
-              consulta={{
-                titulo: 'Historial de Recargas de Saldo',
-                descripcion: 'Muestra la fecha, referencia, banco y monto de todas las recargas realizadas por un cliente.',
-                justificacion:
-                  "Se enlaza la tabla 'recarga' con 'wallet' para llegar al usuario (cliente). Adicionalmente, se hace un INNER JOIN con 'banco' para traer el nombre legible de la entidad financiera y no solo el ID.",
-                inputs: [{ name: 'id_cliente', label: 'ID del Cliente', type: 'number', defaultValue: '2' }],
-                fetchFn: fetchHistorialRecargasCliente,
-              }}
-            />
-            <ConsultaCard
-              consulta={{
-                titulo: 'Historial General de Viajes',
-                descripcion: 'Consulta de todos los traslados solicitados por el cliente, sin importar su estado final.',
-                justificacion:
-                  "Se aplican sentencias LEFT JOIN con 'chofer', 'usuario' y 'vehiculo'. Esto garantiza que si un viaje fue 'CANCELADO' antes de que se le asignara formalmente un chofer o vehículo, el registro del traslado siga apareciendo en el historial del cliente sin generar errores.",
-                inputs: [{ name: 'id_cliente', label: 'ID del Cliente', type: 'number', defaultValue: '2' }],
-                fetchFn: fetchHistorialViajesCliente,
-              }}
-            />
-            <ConsultaCard
-              consulta={{
-                titulo: 'Detalles de Seguridad del Traslado Asignado',
-                descripcion:
-                  'Recupera la información del chofer y el vehículo asociado a un viaje específico para la seguridad del cliente.',
-                justificacion:
-                  "Se utilizan INNER JOIN estructurados para traer el nombre y teléfono de la tabla 'usuario', combinados con el modelo, color y placa de la tabla 'vehiculo'. Esto satisface la regla de negocio que exige proveer datos de identificación visual al cliente antes de abordar.",
-                inputs: [{ name: 'id_traslado', label: 'ID del Traslado', type: 'number', defaultValue: '1' }],
-                fetchFn: fetchDetalleTrasladoCliente,
-              }}
-            />
-          </div>
-        )}
+  <div className="space-y-8 animate-in fade-in duration-300">
+    <ConsultaCard
+      consulta={{
+        titulo: 'Historial de Recargas de Saldo',
+        descripcion: 'Muestra el historial completo de recargas de la billetera virtual del cliente.',
+        justificacion:
+          "Se consultan las tablas 'recarga', 'wallet' y 'banco'. Se utiliza INNER JOIN para relacionar la recarga con la billetera del usuario y el banco de origen, cumpliendo con el requisito de mostrar la fecha, número de referencia, banco y monto[cite: 3393, 3394].",
+        inputs: [{ name: 'id_cliente', label: 'ID del Cliente', type: 'number', defaultValue: '16' }],
+        fetchFn: fetchHistorialRecargasCliente,
+      }}
+    />
+
+    <ConsultaCard
+      consulta={{
+        titulo: 'Historial de Traslados',
+        descripcion: 'Visualización de los traslados realizados por el cliente.',
+        justificacion:
+          "Se consulta la tabla 'traslado' filtrando por el ID del cliente. Se utiliza LEFT JOIN con las tablas 'chofer', 'usuario' y 'vehiculo' ya que algunos traslados (ej. cancelados prematuramente) podrían no tener estos datos asignados, mostrando así el historial completo de manera segura[cite: 3396].",
+        inputs: [{ name: 'id_cliente', label: 'ID del Cliente', type: 'number', defaultValue: '16' }],
+        fetchFn: fetchHistorialViajesCliente,
+      }}
+    />
+
+    <ConsultaCard
+      consulta={{
+        titulo: 'Detalles de Seguridad del Traslado',
+        descripcion: 'Muestra los datos del chofer y del vehículo asignado para un traslado específico.',
+        justificacion:
+          "Se realiza una consulta estricta utilizando INNER JOIN entre las tablas 'traslado', 'chofer', 'usuario' y 'vehiculo' filtrando por el ID del traslado. Esto garantiza que el cliente pueda ver de forma segura los datos de la persona y el vehículo que le prestará el servicio[cite: 3397].",
+        inputs: [{ name: 'id_traslado', label: 'ID del Traslado', type: 'number', defaultValue: '1' }],
+        fetchFn: fetchDetalleTrasladoCliente,
+      }}
+    />
+
+    <ConsultaCard
+      consulta={{
+        titulo: 'Perfil y Saldo Disponible',
+        descripcion: 'Consulta de los datos personales del cliente y el saldo disponible en su billetera virtual.',
+        justificacion:
+          "Se consultan las tablas 'usuario' y 'wallet'. Se utiliza LEFT JOIN en caso de que el sistema permita la existencia de un usuario sin billetera inicializada, garantizando que siempre se devuelvan los datos personales del cliente junto con su saldo actual[cite: 3390, 3391].",
+        inputs: [{ name: 'id_cliente', label: 'ID del Cliente', type: 'number', defaultValue: '16' }],
+        fetchFn: fetchPerfilYSaldoCliente,
+      }}
+    />
+  </div>
+)}
       </div>
     </div>
   )
