@@ -23,10 +23,24 @@ export default function ViajeClient({ initialTraslado, usuarioId, rolUsuario }: 
   const esCliente = rolUsuario === "CLIENTE";
   const idTraslado = traslado.id || traslado.id_traslado;
 
+  // 1. NORMALIZACIÓN SEGURA DE CAMPOS (Soporta Prisma snake_case y Dominio camelCase)
+  const estadoActual = traslado.estadoActual ?? traslado.estado_actual ?? "PENDIENTE";
+  const costoEstimado = Number(traslado.costoEstimado ?? traslado.costo_estimado ?? 0);
+  const distanciaKm = Number(traslado.distanciaEstimadaKm ?? traslado.distancia_estimada_km ?? 0);
+
+  // CORREGIDO: Se usan origenLat / origenLng / destinoLat / destinoLng que son las propiedades reales del Dominio
+  const origenLat = Number(traslado.origenLat ?? traslado.origen_latitud ?? 0);
+  const origenLng = Number(traslado.origenLng ?? traslado.origen_longitud ?? 0);
+  const destinoLat = Number(traslado.destinoLat ?? traslado.destino_latitud ?? 0);
+  const destinoLng = Number(traslado.destinoLng ?? traslado.destino_longitud ?? 0);
+
   // Poll periódico para sincronizar el estado del viaje entre Cliente y Chofer
   useEffect(() => {
-    // Si no hay un ID válido, no iniciamos el polling hacia el servidor
     if (!idTraslado || isNaN(Number(idTraslado))) return;
+
+    // Si el viaje ya finalizó o se canceló, no seguimos consultando
+    if (["FINALIZADO", "COMPLETADO", "CANCELADO"].includes(estadoActual)) return;
+
     const interval = setInterval(async () => {
       try {
         const res = await fetch(`/api/traslados/${idTraslado}`, { cache: "no-store" });
@@ -35,12 +49,10 @@ export default function ViajeClient({ initialTraslado, usuarioId, rolUsuario }: 
           if (json.data) {
             setTraslado(json.data);
             
-            // Si el viaje finalizó o se completó, redirigimos a Calificar
-            if (["FINALIZADO", "COMPLETADO"].includes(json.data.estado_actual)) {
+            const nuevoEstado = json.data.estadoActual ?? json.data.estado_actual;
+            if (["FINALIZADO", "COMPLETADO"].includes(nuevoEstado)) {
               router.push(`/calificar/${idTraslado}`);
-            }
-            // Si fue cancelado, devolvemos al panel principal
-            else if (json.data.estado_actual === "CANCELADO") {
+            } else if (nuevoEstado === "CANCELADO") {
               router.push(esCliente ? "/cliente" : "/chofer");
             }
           }
@@ -51,7 +63,7 @@ export default function ViajeClient({ initialTraslado, usuarioId, rolUsuario }: 
     }, 4000);
 
     return () => clearInterval(interval);
-  }, [idTraslado, router, esCliente]);
+  }, [idTraslado, router, esCliente, estadoActual]);  
 
   // Acciones del Chofer: Iniciar Viaje (CORREGIDO EL TYPO AQUÍ)
   const handleIniciarViaje = async () => {
@@ -118,9 +130,9 @@ export default function ViajeClient({ initialTraslado, usuarioId, rolUsuario }: 
 
   // Preparamos datos del mapa
   const datosRutaMapa = {
-    origen: [Number(traslado.origen_latitud), Number(traslado.origen_longitud)] as [number, number],
-    destino: [Number(traslado.destino_latitud), Number(traslado.destino_longitud)] as [number, number],
-    distanciaKm: Number(traslado.distancia_estimada_km || 0)
+    origen: [origenLat, origenLng] as [number, number],
+    destino: [destinoLat, destinoLng] as [number, number],
+    distanciaKm: distanciaKm
   };
 
   return (
@@ -137,14 +149,18 @@ export default function ViajeClient({ initialTraslado, usuarioId, rolUsuario }: 
                 Traslado #{idTraslado}
               </span>
               <h1 className="text-xl font-black text-slate-900 flex items-center gap-2 mt-0.5">
-                {traslado.estado_actual === "ACEPTADO" && <span className="text-amber-500 flex items-center gap-1.5"><Clock className="w-5 h-5" /> Chofer Asignado</span>}
-                {traslado.estado_actual === "EN_CAMINO" && <span className="text-blue-600 flex items-center gap-1.5"><Navigation className="w-5 h-5 animate-pulse" /> En Camino</span>}
-                {traslado.estado_actual === "EN_CURSO" && <span className="text-emerald-600 flex items-center gap-1.5"><CheckCircle2 className="w-5 h-5" /> Viaje en Curso</span>}
+                {estadoActual === "SOLICITADO" && (
+                  <span className="text-teal-600 flex items-center gap-1.5">
+                    <Loader2 className="w-5 h-5 animate-spin" /> Buscando chofer cercano...
+                  </span>)}
+                {estadoActual === "ACEPTADO" && <span className="text-amber-500 flex items-center gap-1.5"><Clock className="w-5 h-5" /> Chofer Asignado</span>}
+                {estadoActual === "EN_CAMINO" && <span className="text-blue-600 flex items-center gap-1.5"><Navigation className="w-5 h-5 animate-pulse" /> En Camino</span>}
+                {estadoActual === "EN_CURSO" && <span className="text-emerald-600 flex items-center gap-1.5"><CheckCircle2 className="w-5 h-5" /> Viaje en Curso</span>}
               </h1>
             </div>
             <div className="text-right">
               <span className="text-[10px] uppercase font-bold text-slate-400 block">Tarifa Acordada</span>
-              <span className="text-2xl font-black text-emerald-600 font-mono">${Number(traslado.costo_estimado).toFixed(2)}</span>
+              <span className="text-2xl font-black text-emerald-600 font-mono">${costoEstimado.toFixed(2)}</span>
             </div>
           </div>
 
@@ -242,8 +258,9 @@ export default function ViajeClient({ initialTraslado, usuarioId, rolUsuario }: 
               <MapPin className="w-4 h-4 text-[#0E7C86] shrink-0 mt-1" />
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">Origen</span>
+                {/* CORREGIDO: Usamos origenLat y origenLng normalizados */}
                 <p className="text-xs font-bold text-slate-800">
-                  Lat: {Number(traslado.origen_latitud).toFixed(4)}, Lng: {Number(traslado.origen_longitud).toFixed(4)}
+                  Lat: {origenLat.toFixed(4)}, Lng: {origenLng.toFixed(4)}
                 </p>
               </div>
             </div>
@@ -252,8 +269,9 @@ export default function ViajeClient({ initialTraslado, usuarioId, rolUsuario }: 
               <Navigation className="w-4 h-4 text-rose-600 shrink-0 mt-1" />
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">Destino</span>
+                {/* CORREGIDO: Usamos destinoLat y destinoLng normalizados */}
                 <p className="text-xs font-bold text-slate-800">
-                  Lat: {Number(traslado.destino_latitud).toFixed(4)}, Lng: {Number(traslado.destino_longitud).toFixed(4)}
+                  Lat: {destinoLat.toFixed(4)}, Lng: {destinoLng.toFixed(4)}
                 </p>
               </div>
             </div>
@@ -264,7 +282,7 @@ export default function ViajeClient({ initialTraslado, usuarioId, rolUsuario }: 
         <div className="space-y-3 pt-4 border-t border-slate-100">
           {!esCliente && (
             <>
-              {["ACEPTADO", "EN_CAMINO"].includes(traslado.estado_actual) && (
+              {["ACEPTADO", "EN_CAMINO"].includes(estadoActual) && (
                 <button
                   type="button"
                   onClick={handleIniciarViaje}
@@ -276,7 +294,7 @@ export default function ViajeClient({ initialTraslado, usuarioId, rolUsuario }: 
                 </button>
               )}
 
-              {traslado.estado_actual === "EN_CURSO" && (
+              {estadoActual === "EN_CURSO" && (
                 <button
                   type="button"
                   onClick={handleCompletarViaje}
@@ -284,7 +302,7 @@ export default function ViajeClient({ initialTraslado, usuarioId, rolUsuario }: 
                   className="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black py-4 rounded-2xl shadow-lg flex justify-center items-center gap-2 text-sm transition-all transform active:scale-[0.98]"
                 >
                   {loadingAccion ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
-                  Finalizar Viaje y Cobrar (${Number(traslado.costo_estimado).toFixed(2)})
+                  Finalizar Viaje y Cobrar (${costoEstimado.toFixed(2)})
                 </button>
               )}
             </>
@@ -298,7 +316,7 @@ export default function ViajeClient({ initialTraslado, usuarioId, rolUsuario }: 
           )}
 
           {/* Botón de Cancelación */}
-          {["ACEPTADO", "EN_CAMINO"].includes(traslado.estado_actual) && (
+          {["ACEPTADO", "EN_CAMINO"].includes(estadoActual) && (
             <button
               type="button"
               onClick={handleCancelarViaje}

@@ -22,3 +22,5 @@ CREATE TABLE calificacion (
     FOREIGN KEY (id_chofer) 
     REFERENCES chofer(id_usuario)
 );
+
+SELECT * FROM calificacion;

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import MapaWrapper from "@/components/cliente/MapaWrapper";
 import { DatosRuta } from "@/components/cliente/MapaTraslado";
-import { solicitarNuevoTraslado, cotizarViaje, verificarViajeActivo } from "./actions";
+import { solicitarNuevoTraslado, cotizarViaje } from "./actions";
 import { Car, Loader2, MapPin, Navigation, ShieldCheck, DollarSign, CheckCircle2, X } from "lucide-react";
 import ModalCalificacion from "@/components/ui/ModalCalificacion";
 import { useRouter } from "next/navigation";
@@ -22,25 +22,6 @@ export default function ClienteDashboardPage() {
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [trasladoPendienteId, setTrasladoPendienteId] = useState<number | null>(null);
   const router = useRouter();
-
-  useEffect(() => {
-    async function revisarEstadoViaje() {
-      // 1. Primero verificamos si tiene un viaje en curso
-      const viajeRes = await verificarViajeActivo();
-      if (viajeRes.success && viajeRes.trasladoId) {
-        router.push(`/viaje/${viajeRes.trasladoId}`);
-        return;
-      }
-
-      // 2. Si no hay viaje activo, revisamos si debe una calificación anterior
-      const califRes = await verificarViajePendienteCalificar(true);
-      if (califRes.success && califRes.trasladoId) {
-        router.push(`/calificar/${califRes.trasladoId}`);
-      }
-    }
-    revisarEstadoViaje();
-  }, [router]);
-
 
   // 3. EFECTO: Al cargar el Dashboard, verificamos si debe una calificación
   // EFECTO: Al cargar el Dashboard, verificamos si debe una calificación
@@ -91,15 +72,13 @@ export default function ClienteDashboardPage() {
 
     const res = await solicitarNuevoTraslado(formData);
 
-    if (res.success) {
-      setFeedback({ type: "success", text: res.message! });
-      // Reiniciamos todo tras una solicitud exitosa
-      setDatosRuta({ origen: null, destino: null, distanciaKm: 0 });
-      setCotizacion(null);
+    if (res.success && res.trasladoId) {
+      // 🟢 CORRECCIÓN: Redirigimos automáticamente a la pantalla de seguimiento del viaje
+      router.push(`/viaje/${res.trasladoId}`);
     } else {
-      setFeedback({ type: "error", text: res.error! });
+      setFeedback({ type: "error", text: res.error || "No se pudo crear el traslado." });
+      setLoadingSolicitud(false);
     }
-    setLoadingSolicitud(false);
   }
 
   return (

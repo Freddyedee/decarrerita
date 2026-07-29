@@ -8,7 +8,7 @@ import {
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import ModalCalificacion from "@/components/ui/ModalCalificacion";
-import { verificarViajeActivo, verificarViajePendienteCalificar } from "@/app/(cliente)/cliente/actions"; // O donde esté la acción
+import { verificarViajePendienteCalificar } from "@/app/(cliente)/cliente/actions"; // O donde esté la acción
 
 
 interface Vehiculo {
@@ -58,26 +58,6 @@ export default function ChoferDashboardClient({
 
   // 2. ESTADO PARA EL MODAL
   const [trasladoPendienteId, setTrasladoPendienteId] = useState<number | null>(null);
-
-
-  useEffect(() => {
-    if (!choferId) return;
-    async function revisarEstadoViaje() {
-      // 1. Redirigir a pantalla de viaje si está en una carrera activa
-      const viajeRes = await verificarViajeActivo();
-      if (viajeRes.success && viajeRes.trasladoId) {
-        router.push(`/viaje/${viajeRes.trasladoId}`);
-        return;
-      }
-
-      // 2. Redirigir a calificación si tiene una pendiente
-      const califRes = await verificarViajePendienteCalificar(false);
-      if (califRes.success && califRes.trasladoId) {
-        router.push(`/calificar/${califRes.trasladoId}`);
-      }
-    }
-    revisarEstadoViaje();
-  }, [choferId, router]);
 
   // 3. EFECTO AL CARGAR EL DASHBOARD O AL TERMINAR UN VIAJE
   useEffect(() => {
@@ -182,46 +162,31 @@ export default function ChoferDashboardClient({
     if (!oferta) return;
     setProcesandoAccion(true);
     try {
-      await fetch(`/api/traslados/${oferta.trasladoId}/responder`, {
+      const res = await fetch(`/api/traslados/responder`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ asignacionId: oferta.asignacionId, respuesta }),
       });
-      if (respuesta === "ACEPTADO") {
-        setViajeActivo({
-          trasladoId: oferta.trasladoId, estado: "EN_CAMINO",
-          costoEstimado: oferta.costoEstimado, distanciaKm: oferta.distanciaKm,
-        });
+
+      if (!res.ok) {
+        throw new Error("No se pudo registrar la respuesta a la oferta.");
       }
+
+      if (respuesta === "ACEPTADO") {
+        // 🟢 CORRECCIÓN: En lugar de usar popups/tarjetas internas,
+        // redirigimos de inmediato a la ventana de viaje dedicada
+        router.push(`/viaje/${oferta.trasladoId}`);
+        return;
+      }
+
       setOferta(null);
-    } finally { setProcesandoAccion(false); }
+    } catch (e: any) {
+      alert(e.message || "Ocurrió un error al responder la oferta.");
+    } finally {
+      setProcesandoAccion(false);
+    }
   };
 
-  const handleIniciarViaje = async () => {
-    if (!viajeActivo) return;
-    setProcesandoAccion(true);
-    try {
-      await fetch(`/api/traslados/${viajeActivo.trasladoId}/iniciar`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ trasladoId: viajeActivo.trasladoId }),
-      });
-      setViajeActivo({ ...viajeActivo, estado: "EN_CURSO" });
-    } finally { setProcesandoAccion(false); }
-  };
-
-  const handleCompletarViaje = async () => {
-    if (!viajeActivo) return;
-    setProcesandoAccion(true);
-    try {
-      await fetch(`/api/traslados/${viajeActivo.trasladoId}/completar`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ trasladoId: viajeActivo.trasladoId }),
-      });
-      alert("🎉 ¡Viaje finalizado! Ganancia acreditada a tu Wallet.");
-      setViajeActivo(null);
-      router.refresh();
-    } finally { setProcesandoAccion(false); }
-  };
 
   return (
     // ¡AQUÍ ESTÁ EL ARREGLO VISUAL! pt-16 sm:pt-20 empuja todo hacia abajo de la cabecera fija
@@ -321,15 +286,6 @@ export default function ChoferDashboardClient({
               </div>
               <span className="text-sm font-mono bg-slate-800 px-3 py-1.5 rounded-xl">{viajeActivo.distanciaKm} km</span>
             </div>
-            {viajeActivo.estado === "EN_CAMINO" ? (
-              <button onClick={handleIniciarViaje} disabled={procesandoAccion} className="w-full bg-teal-500 hover:bg-teal-600 text-slate-950 font-black py-4 rounded-2xl flex justify-center gap-2">
-                {procesandoAccion ? <Loader2 className="w-5 h-5 animate-spin" /> : <Navigation className="w-5 h-5" />} Llegué por el Cliente / Iniciar Viaje
-              </button>
-            ) : (
-              <button onClick={handleCompletarViaje} disabled={procesandoAccion} className="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black py-4 rounded-2xl flex justify-center gap-2">
-                {procesandoAccion ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle className="w-5 h-5" />} Finalizar Viaje y Cobrar
-              </button>
-            )}
           </div>
         )}
       </div>

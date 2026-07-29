@@ -4,50 +4,9 @@ import { getCurrentRole } from "@/shared/auth/userCurrentRole";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 
+// IMPORTANTE: Ajusta esta ruta hacia donde guardaste tu archivo traslado.modules.ts
 import { trasladoController } from "@/modules/Traslado/presentation/traslado.modules";
-
-export async function verificarViajeActivo() {
-  try {
-    const sesion = await getCurrentRole();
-    if (!sesion || !sesion.usuarioId || !sesion.rol) {
-      return { success: false, trasladoId: null, estado: null, rol: null };
-    }
-
-    const usuarioId = sesion.usuarioId;
-    const esCliente = sesion.rol === "CLIENTE";
-
-    // Buscamos si el usuario tiene algún viaje que esté en proceso (no finalizado ni cancelado)
-    const viajeActivo = await prisma.traslado.findFirst({
-      where: {
-        ...(esCliente ? { id_cliente: usuarioId } : { id_chofer: usuarioId }),
-        estado_actual: {
-          in: ["ACEPTADO", "EN_CAMINO", "EN_CURSO", "LLEGADO"], // Estados vivos del viaje
-        },
-      },
-      orderBy: {
-        fecha_solicitud: "desc",
-      },
-      select: {
-        id_traslado: true,
-        estado_actual: true,
-      },
-    });
-
-    if (viajeActivo) {
-      return { 
-        success: true, 
-        trasladoId: viajeActivo.id_traslado,
-        estado: viajeActivo.estado_actual,
-        rol: sesion.rol
-      };
-    }
-
-    return { success: false, trasladoId: null, estado: null, rol: sesion.rol };
-  } catch (error) {
-    console.error("❌ [ERROR VERIFICANDO VIAJE ACTIVO]:", error);
-    return { success: false, trasladoId: null, estado: null, rol: null };
-  }
-}
+import { tarifaRepository } from "@/modules/Tarifa/presentation/tarifa.modules";
 
 export async function verificarViajePendienteCalificar(esCliente: boolean) {
   try {
@@ -132,6 +91,7 @@ export async function solicitarNuevoTraslado(formData: FormData) {
 
     return { 
       success: true, 
+      trasladoId: resultado.traslado.id,
       message: `¡Viaje #${resultado.traslado.id} solicitado con éxito! Tarifa estimada: $${resultado.traslado.costoEstimado}. Generando cola y buscando chofer...` 
     };
 
@@ -150,20 +110,34 @@ export async function solicitarNuevoTraslado(formData: FormData) {
 
 export async function cotizarViaje(distanciaKm: number) {
   try {
-    if (distanciaKm <= 0) return { success: false, error: "Distancia inválida." };
+    if (distanciaKm <= 0) {
+      return { success: false, error: "Distancia inválida." };
+    }
 
-    // Aquí puedes aplicar la fórmula real de tu negocio o consultar tu tabla Tarifa en BD.
-    // Por ejemplo: Tarifa Base ($3.00) + ($1.20 por Kilómetro)
-    const tarifaBase = 3.00;
-    const costoPorKm = 1.20;
-    const costoCalculado = Number((tarifaBase + (distanciaKm * costoPorKm)).toFixed(2));
+    // 1. Consultamos la tarifa vigente real en la base de datos (PostgreSQL)
+    const tarifa = await tarifaRepository.findVigente();
+
+    if (!tarifa) {
+      return { 
+        success: false, 
+        error: "No hay una tarifa vigente configurada en el sistema." 
+      };
+    }
+
+    // 2. Usamos el método de tu entidad de dominio para calcular el costo
+    const costoCalculado = Number(tarifa.calcularCosto(distanciaKm).toFixed(2));
+
+    // 3. Extraemos la base y precio por km de la BD para el desglose
+    const base = Number(tarifa.tarifaBase).toFixed(2);
+    const precioKm = Number(tarifa.precioKm).toFixed(2);
 
     return { 
       success: true, 
       costo: costoCalculado,
-      desglose: `Tarifa base ($${tarifaBase}) + ${distanciaKm} km x $${costoPorKm}/km`
+      desglose: `Tarifa base ($${base}) + ${distanciaKm} km × $${precioKm}/km (Tarifa Vigente BD)`
     };
   } catch (error) {
-    return { success: false, error: "No se pudo calcular la tarifa." };
+    console.error("❌ [ERROR COTIZANDO VIAJE EN BD]:", error);
+    return { success: false, error: "No se pudo calcular la tarifa desde la base de datos." };
   }
 }
