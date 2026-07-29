@@ -357,3 +357,28 @@ LIMIT 50;`;
     return { success: false, error: 'Error al ejecutar la consulta' };
   }
 }
+
+// --- CHOFER: Traslados Cancelados por la Empresa ---
+export async function fetchTrasladosCanceladosChofer(params?: Record<string, string>) {
+  try {
+    const choferId = params?.id_chofer || '3'; // Asegúrate de usar el ID de prueba correcto
+    
+    const sqlQuery = `SELECT 
+      t.id_traslado, 
+      t.fecha_solicitud, 
+      t.origen_latitud, 
+      t.destino_latitud, 
+      t.costo_estimado, 
+      t.estado_actual
+    FROM traslado t
+    WHERE t.id_chofer = ${choferId} 
+    AND t.estado_actual LIKE '%CANCELADO%'
+    ORDER BY t.fecha_solicitud DESC;`;
+
+    const data = await prisma.$queryRawUnsafe(sqlQuery);
+    return { success: true, data: JSON.parse(JSON.stringify(data)), sqlQuery };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: 'Error al ejecutar la consulta' };
+  }
+}

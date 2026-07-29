@@ -14,6 +14,7 @@ import {
   fetchAuditoriaGeneral,
   fetchSaldosWallets,
   fetchTodosLosUsuarios,
+  fetchTrasladosCanceladosChofer
 } from './actions'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -139,44 +140,60 @@ export default function ConsultasClient() {
         )}
 
         {activeTab === 'chofer' && (
-          <div className="space-y-8 animate-in fade-in duration-300">
-            <ConsultaCard
-              consulta={{
-                titulo: 'Historial de Traslados por Período',
-                descripcion: 'Consulta de los traslados realizados por un chofer en un rango de fechas específico.',
-                justificacion:
-                  "Se consulta la tabla 'traslado' filtrando directamente por la llave foránea 'id_chofer'. Para el periodo de tiempo, se utiliza la sentencia BETWEEN (o operadores >= y <=) sobre el campo 'fecha_solicitud'.",
-                inputs: [
-                  { name: 'id_chofer', label: 'ID del Chofer', type: 'number', defaultValue: '1' },
-                  { name: 'fecha_inicio', label: 'Fecha Inicio', type: 'date', defaultValue: '2026-01-01' },
-                  { name: 'fecha_fin', label: 'Fecha Fin', type: 'date', defaultValue: '2026-12-31' },
-                ],
-                fetchFn: fetchTrasladosChofer,
-              }}
-            />
-            <ConsultaCard
-              consulta={{
-                titulo: 'Perfil Completo del Chofer',
-                descripcion: 'Muestra los datos personales, información bancaria y contactos de emergencia del chofer.',
-                justificacion:
-                  "Se usa un INNER JOIN con 'usuario' para los datos base y LEFT JOIN con 'banco' y 'contacto_emergencia' para no descartar al chofer si aún no ha registrado su cuenta o contactos. Esto genera una fila por cada contacto registrado.",
-                inputs: [{ name: 'id_chofer', label: 'ID del Chofer', type: 'number', defaultValue: '1' }],
-                fetchFn: fetchPerfilChofer,
-              }}
-            />
-            <ConsultaCard
-              consulta={{
-                titulo: 'Cuentas por Cobrar (Ganancias del Chofer)',
-                descripcion: 'Listado de los traslados completados y el cálculo del 70% que le corresponde cobrar al chofer.',
-                justificacion:
-                  "Se filtran los traslados con estado 'COMPLETADO'. Se calcula dinámicamente el 70% del 'costo_estimado' (costo_estimado * 0.70) para mostrar la ganancia real que la empresa le adeuda al conductor.",
-                inputs: [{ name: 'id_chofer', label: 'ID del Chofer', type: 'number', defaultValue: '1' }],
-                fetchFn: fetchPagadoAChofer,
-              }}
-            />
-          </div>
-        )}
+  <div className="space-y-8 animate-in fade-in duration-300">
+    <ConsultaCard
+      consulta={{
+        titulo: 'Historial de Traslados por Período',
+        descripcion: 'Consulta de los traslados realizados por un chofer en un rango de fechas específico.',
+        justificacion:
+          "Se consulta la tabla 'traslado' filtrando directamente por la llave foránea 'id_chofer'. Para el periodo de tiempo, se utiliza la sentencia BETWEEN (o operadores >= y <=) sobre el campo 'fecha_solicitud'.",
+        inputs: [
+          { name: 'id_chofer', label: 'ID del Chofer', type: 'number', defaultValue: '3' },
+          { name: 'fecha_inicio', label: 'Fecha Inicio', type: 'date', defaultValue: '2026-01-01' },
+          { name: 'fecha_fin', label: 'Fecha Fin', type: 'date', defaultValue: '2026-12-31' },
+        ],
+        fetchFn: fetchTrasladosChofer,
+      }}
+    />
+    
+    <ConsultaCard
+      consulta={{
+        titulo: 'Perfil Completo del Chofer',
+        descripcion: 'Muestra los datos personales, información bancaria y contactos de emergencia del chofer.',
+        justificacion:
+          "Se usa un INNER JOIN con 'usuario' para los datos base y LEFT JOIN con 'banco' y 'contacto_emergencia' para no descartar al chofer si aún no ha registrado su cuenta o contactos. Esto genera una fila por cada contacto registrado.",
+        inputs: [{ name: 'id_chofer', label: 'ID del Chofer', type: 'number', defaultValue: '3' }],
+        fetchFn: fetchPerfilChofer,
+      }}
+    />
+    
+    <ConsultaCard
+      consulta={{
+        titulo: 'Historial de Retiros y Pagos Cancelados al Chofer',
+        descripcion: 'Muestra los pagos reales que la empresa le ha cancelado al chofer mediante retiros aprobados.',
+        justificacion:
+          "Se consultan las tablas 'solicitud_retiro', 'wallet' y 'banco', filtrando por el estado 'APROBADO'. Esto demuestra la trazabilidad real de los pagos según la lógica transaccional del sistema, en lugar de un simple cálculo matemático.",
+        inputs: [
+          { name: 'id_chofer', label: 'ID del Chofer', type: 'number', defaultValue: '3' },
+          { name: 'fecha_inicio', label: 'Fecha Inicio', type: 'date', defaultValue: '2026-01-01' },
+          { name: 'fecha_fin', label: 'Fecha Fin', type: 'date', defaultValue: '2026-12-31' },
+        ],
+        fetchFn: fetchPagadoAChofer,
+      }}
+    />
 
+    <ConsultaCard
+      consulta={{
+        titulo: 'Traslados Cancelados por la Empresa',
+        descripcion: 'Listado de los traslados asignados al chofer que fueron cancelados.',
+        justificacion:
+          "Se consulta la tabla 'traslado' filtrando por el ID del chofer y utilizando el operador LIKE '%CANCELADO%' en el estado_actual para capturar de forma flexible cualquier tipo de cancelación sin importar si proviene del admin o del sistema.",
+        inputs: [{ name: 'id_chofer', label: 'ID del Chofer', type: 'number', defaultValue: '3' }],
+        fetchFn: fetchTrasladosCanceladosChofer,
+      }}
+    />
+  </div>
+)}
         {activeTab === 'cliente' && (
           <div className="space-y-8 animate-in fade-in duration-300">
             <ConsultaCard
