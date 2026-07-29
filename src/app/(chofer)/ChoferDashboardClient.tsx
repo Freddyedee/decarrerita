@@ -59,6 +59,37 @@ export default function ChoferDashboardClient({
   // 2. ESTADO PARA EL MODAL
   const [trasladoPendienteId, setTrasladoPendienteId] = useState<number | null>(null);
 
+  const [estadisticas, setEstadisticas] = useState({
+    gananciasHoy: 0,
+    viajesListosHoy: 0,
+    viajesTotales: 0,
+  });
+
+  // 2. EFECTO: Consultar métricas en BD (se refresca al cargar o al terminar un viaje)
+  useEffect(() => {
+    if (!choferId) return;
+
+    async function cargarEstadisticas() {
+      try {
+        const res = await fetch(`/api/drivers/${choferId}/metrics`, { cache: "no-store" });
+        if (!res.ok) return;
+
+        const { data } = await res.json();
+        if (data) {
+          setEstadisticas({
+            gananciasHoy: Number(data.gananciasHoy || 0),
+            viajesListosHoy: Number(data.viajesListosHoy || 0),
+            viajesTotales: Number(data.viajesTotales || 0),
+          });
+        }
+      } catch (error) {
+        console.error("Error al cargar estadísticas del chofer:", error);
+      }
+    }
+
+    cargarEstadisticas();
+  }, [choferId, viajeActivo]); // Al cambiar viajeActivo, se actualiza automáticamente
+
   // 3. EFECTO AL CARGAR EL DASHBOARD O AL TERMINAR UN VIAJE
   useEffect(() => {
     if (!choferId) return;
@@ -334,17 +365,24 @@ export default function ChoferDashboardClient({
         </div>
       )}
 
-      {/* Footer Estadísticas */}
+      {/* Footer Estadísticas - Conectado al 100% con BD */}
       <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-200">
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col items-center">
           <Wallet className="w-4 h-4 text-[#0E7C86] mb-1" />
           <span className="text-xs font-bold uppercase text-slate-400">Ganancias Hoy</span>
-          <span className="text-xl font-black text-slate-900 font-mono">$0.00</span>
+          <span className="text-xl font-black text-slate-900 font-mono">
+            ${estadisticas.gananciasHoy.toFixed(2)}
+          </span>
         </div>
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col items-center">
           <Route className="w-4 h-4 text-blue-500 mb-1" />
-          <span className="text-xs font-bold uppercase text-slate-400">Viajes Listos</span>
-          <span className="text-xl font-black text-slate-900 font-mono">0</span>
+          <span className="text-xs font-bold uppercase text-slate-400">Viajes Listos (Hoy)</span>
+          <span className="text-xl font-black text-slate-900 font-mono">
+            {estadisticas.viajesListosHoy}{" "}
+            <span className="text-xs font-normal text-slate-400">
+              ({estadisticas.viajesTotales} tot.)
+            </span>
+          </span>
         </div>
       </div>
     </div>
